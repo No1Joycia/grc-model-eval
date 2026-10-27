@@ -191,11 +191,10 @@ def main():
         raise SystemExit(f"No answered questions in #{args.start}-#{end}.")
     print(f"scoring {len(ids)} answered questions in #{args.start}-#{end} (of {len(questions)})")
 
-    rng = random.Random(0)
-    shuffled = ids[:]
-    while len(ids) > 1 and any(a == b for a, b in zip(ids, shuffled)):
-        rng.shuffle(shuffled)
-    other_ref = {i: questions[j]["reference_answer"] for i, j in zip(ids, shuffled)}
+    # Floor: a reference answer to a different question, drawn from the whole set
+    # with a per-question seed, so it does not depend on which range is scored.
+    other_ref = {i: questions[random.Random(i).choice([j for j in questions if j != i])]["reference_answer"]
+                 for i in ids}
 
     # Embed every text once; reference embeddings are cached on disk because
     # they are the same for every model we score.
@@ -205,7 +204,7 @@ def main():
     digest = lambda t: hashlib.sha1(t.encode()).hexdigest()
     cache_path = ROOT / f".embed_cache_{args.embed_model.replace('/', '__')}.npz"
     cache = dict(np.load(cache_path)) if cache_path.exists() else {}
-    ref_texts = {r["answer"] for i in ids for r in questions[i]["references"]}
+    ref_texts = {r["answer"] for i in ids for r in questions[i]["references"]} | set(other_ref.values())
     texts = list(ref_texts | {answers[i]["answer"] for i in ids})
     missing = [t for t in texts if digest(t) not in cache]
     print(f"embedding {len(missing)} texts ({len(texts) - len(missing)} cached)")
@@ -215,7 +214,10 @@ def main():
         vecs = model.encode(missing, normalize_embeddings=True, batch_size=8, show_progress_bar=True)
         for t, v in zip(missing, vecs):
             cache[digest(t)] = v
-        np.savez(cache_path, **{digest(t): cache[digest(t)] for t in ref_texts})
+        # Keep every reference embedding (not just this range's); drop model answers.
+        keep = {digest(r["answer"]) for q in questions.values() for r in q["references"]}
+        keep |= {digest(t) for t in other_ref.values()}
+        np.savez(cache_path, **{k: v for k, v in cache.items() if k in keep})
     cos = lambda a, b: float(cache[digest(a)] @ cache[digest(b)])
 
     rouge = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)

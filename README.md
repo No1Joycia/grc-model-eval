@@ -6,11 +6,79 @@ serverless Modal GPU (L4) and exposes an authenticated, OpenAI-style chat API. I
 
 Stack: Modal + PyTorch + Transformers 4.45.1 + FastAPI. No vLLM or Ollama.
 
+---
+
+## For teammates: use the hosted model
+
+The model is already running on Joy's Modal account, so you don't need a Modal account, a GPU or `modal` installed.
+You only need Python 3 and three values from Joy: **URL, key, secret**. Joy sends them privately.
+Never commit them or post them in group chats.
+
+### 1. Clone and add the credentials
+
+```bash
+git clone https://github.com/No1Joycia/nanbeige-modal.git
+cd nanbeige-modal
+cp .env.example .env
+# edit .env and paste the MODAL_URL, MODAL_KEY (wk-...) and MODAL_SECRET (ws-...) you were given
+```
+
+### 2. Ask a question
+
+```bash
+python3 ask.py --health                                    # wake the GPU: first call ~1-3 min
+python3 ask.py "What is GNU Radio? Answer in one sentence."
+python3 ask.py --max-tokens 1024 "Explain how a PLL locks onto a carrier."
+```
+
+The answer is printed to the terminal, followed by the token count and time taken.
+Expect about 9 tokens/s, so a 500-token answer takes about a minute.
+The server handles **one request at a time**: if someone else is running an eval, your question waits in line behind theirs.
+
+You can also use `curl` (see [step 6](#6-ask-one-question)) or any OpenAI-compatible client with base URL `$MODAL_URL/v1`
+and model `Nanbeige/Nanbeige4.2-3B`. Send the extra headers `Modal-Key` and `Modal-Secret`.
+Supported: text chat only. Not supported: streaming or tool calls.
+
+### 3. Evaluate the model on specific questions from the trial set
+
+The set has 100 graded questions in `trial_eval/trial_eval_100.jsonl`: #1–33 basic, #34–67 intermediate, #68–100 advanced.
+To look up a question's number: `sed -n 7p trial_eval/trial_eval_100.jsonl | python3 -c "import sys,json;print(json.load(sys.stdin)['question'])"`
+
+**Get the model's answer** (Python 3 only, no installs):
+
+```bash
+python3 trial_eval/run_trial.py --start 7 --end 7          # just question #7
+python3 trial_eval/run_trial.py --start 1 --end 30         # a range; prints a time estimate first
+```
+
+**Score it and get the HTML report.** This needs a one-time setup of about 3 GB: PyTorch plus the bge-m3 embedding model.
+
+```bash
+# one time (install uv first if needed: https://docs.astral.sh/uv/)
+uv venv --python 3.12 .venv-eval
+uv pip install --python .venv-eval/bin/python sentence-transformers rouge-score
+
+.venv-eval/bin/python trial_eval/score_trial.py --start 7 --end 7
+open trial_eval/answers_nanbeige_b0_q7-7_report.html       # question, answer, reference, scores
+```
+
+The first scoring run downloads bge-m3 (about 2.2 GB). Reference embeddings are already cached in the repo,
+so after that only the new answers are embedded. See `trial_eval/README.txt` for what each metric means.
+
+Your answers and reports stay on your machine; they're git-ignored.
+
+---
+
+## How it was built (Joy's setup, steps 0–8)
+
+Everything below is for running your **own** copy of the server on your own Modal account.
+
 | File | What it does |
 |---|---|
 | `nanbeige_modal.py` | Step 1–2: download the weights into a Modal Volume (CPU), then test-load them on an L4 GPU |
 | `nanbeige_generate_test.py` | Step 3: one-shot generation smoke test on the GPU (no server) |
 | `nanbeige_api_server.py` | Step 4: deployed HTTPS chat API (`/health`, `/v1/models`, `/v1/chat/completions`) |
+| `ask.py` | Ask the hosted model one question from the terminal (stdlib only) |
 | `trial_eval/` | Step 5: 100-question trial eval: ask the endpoint, score the answers, HTML report |
 | `modal_commands.txt` | Short command notebook for day-to-day use |
 | `*_log.txt` | Logs from the runs already done, kept for reference |
