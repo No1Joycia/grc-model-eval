@@ -1,0 +1,2 @@
+{"id": "example_tone", "question": "Which GNU Radio block makes a 1 kHz cosine tone, and which parameters set its frequency and amplitude?"}
+{"id": "example_throttle", "question": "What does a Throttle block do in a GNU Radio flowgraph, and when should it not be used?"}

@@ -1,0 +1,5 @@
+# API keys: never commit
+.env
+
+# session folders written by ./agent (commit a run deliberately if wanted)
+runs/

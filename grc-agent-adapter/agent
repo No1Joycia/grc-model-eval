@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# grc-agent-adapter: run GRC-Agent without its window on macOS; every output is written as files.
+#   ./agent run "message" [options]                    start a session
+#   ./agent continue <call folder> "message"           the next message of a session
+#   ./agent batch questions.jsonl --out answers.jsonl  one fresh session per question (resumable)
+#   ./agent show <call folder> [--transcript]          print a call's summary or conversation
+#   ./agent selftest                                   check the setup (no model or API key needed)
+# See README.md.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Default layout: ~/Projects/nanbeige-modal/grc-agent-adapter next to ~/Projects/grc-agent.
+export GRC_AGENT_REPO="${GRC_AGENT_REPO:-$(cd "$HERE/../.." && pwd)/grc-agent}"
+PY="$GRC_AGENT_REPO/.venv/bin/python"
+if [ ! -x "$PY" ]; then
+  echo "GRC-Agent's Python was not found at $PY: set GRC_AGENT_REPO or see README.md (Setup)" >&2
+  exit 2
+fi
+export PYTHONPATH="$HERE/src${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONDONTWRITEBYTECODE=1
+export QT_QPA_PLATFORM=offscreen
+export GRC_ADAPTER_HOME="$HERE"
+exec "$PY" -m grc_adapter "$@"
