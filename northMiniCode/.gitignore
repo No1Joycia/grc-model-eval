@@ -1,0 +1,5 @@
+# API key: never commit
+.env
+
+# per-run answers and scores (commit a specific run deliberately if wanted)
+answers/
