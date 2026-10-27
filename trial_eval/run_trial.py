@@ -4,6 +4,9 @@ Reads MODAL_URL / MODAL_KEY / MODAL_SECRET from ../.env (or the environment).
 Resumable: questions already in the output file are skipped, so you can stop
 with Ctrl+C and run again. Stdlib only.
 
+The first line printed is a rough time and Modal cost estimate for the run; the
+last line is the actual time and approximate cost.
+
 Usage:
     python trial_eval/run_trial.py                       # all questions
     python trial_eval/run_trial.py --start 1 --end 30    # questions #1..#30 only
@@ -28,6 +31,12 @@ SYSTEM_PROMPT = (
     "For calculations, show the key steps and state the final result with units."
 )
 
+# Rough Modal list prices in USD/hour (check https://modal.com/pricing):
+# L4 GPU ~$0.80 + 4 CPU cores ~$0.19 + 24 GiB memory ~$0.19 (the server's settings).
+COST_PER_HOUR = 1.18
+COLD_START_S = 150   # container start + model load, billed once if the GPU was idle
+SCALEDOWN_S = 60     # GPU stays on (billed) this long after the last answer
+
 
 def load_env(path):
     if not path.exists():
@@ -50,9 +59,15 @@ def estimate_seconds(out, max_tokens):
     return 0.6 * max_tokens / 9 + 5, "rough guess at ~9 tok/s"
 
 
+def fmt_cost(seconds):
+    return f"${seconds / 3600 * COST_PER_HOUR:.2f}"
+
+
 def fmt_duration(seconds):
+    if seconds < 60:
+        return "<1 min"
     h, m = divmod(int(seconds) // 60, 60)
-    return f"{h} h {m} min" if h else f"{max(m, 1)} min"
+    return f"{h} h {m} min" if h else f"{m} min"
 
 
 def ask(url, key, secret, question, max_tokens, temperature, timeout):
@@ -98,12 +113,15 @@ def main():
     out = Path(args.out)
     done = {json.loads(l)["id"] for l in open(out) if l.strip()} if out.exists() else set()
     todo = [q for q in questions if q["id"] not in done]
-    print(f"questions #{questions[0]['num']}-#{questions[-1]['num']} ({len(questions)}) | "
-          f"{len(questions) - len(todo)} already answered | {len(todo)} to go")
-
     per_q, basis = estimate_seconds(out, args.max_tokens)
-    print(f"estimated time: ~{fmt_duration(per_q * len(todo))} "
-          f"(~{per_q:.0f} s/question, {basis}; add ~1-3 min if the GPU is cold)")
+    work = per_q * len(todo)
+    billed = work + COLD_START_S + SCALEDOWN_S if todo else 0
+    print(f"ESTIMATE: {len(todo)} questions -> ~{fmt_duration(work)}, ~{fmt_cost(billed)} Modal cost "
+          f"(up to ~{fmt_duration(work + COLD_START_S)} incl. GPU cold start)", flush=True)
+    print(f"  questions #{questions[0]['num']}-#{questions[-1]['num']} ({len(questions)}) | "
+          f"{len(questions) - len(todo)} already answered | {len(todo)} to go")
+    print(f"  ~{per_q:.0f} s/question ({basis}); ~${COST_PER_HOUR:.2f}/h for L4 + CPU + memory "
+          f"(A10G/L40S fallback costs more)", flush=True)
     if args.estimate_only or not todo:
         return
 
@@ -114,6 +132,7 @@ def main():
     run_started = time.time()
     with open(out, "a") as f:
         for i, q in enumerate(todo, 1):
+            print(f"  asking #{q['num']} ({q['difficulty']}, {q['task_type']})...", flush=True)
             for attempt in range(args.retries + 1):
                 started = time.time()
                 try:
@@ -122,7 +141,7 @@ def main():
                     break
                 except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
                     detail = exc.read().decode()[:300] if isinstance(exc, urllib.error.HTTPError) else exc
-                    print(f"  ! {q['id']} attempt {attempt + 1} failed: {detail}")
+                    print(f"  ! {q['id']} attempt {attempt + 1} failed: {detail}", flush=True)
                     if attempt == args.retries:
                         raise
                     time.sleep(10)
@@ -143,7 +162,11 @@ def main():
             toks = usage.get("completion_tokens", 0)
             print(f"[{i}/{len(todo)}] #{q['num']:<3} {q['id']} {q['difficulty']:<12} {toks:>5} tok "
                   f"{seconds:6.1f}s ({toks / max(seconds, 1e-6):.1f} tok/s) {choice.get('finish_reason')} | "
-                  f"~{fmt_duration((time.time() - run_started) / i * (len(todo) - i))} left")
+                  f"~{fmt_duration((time.time() - run_started) / i * (len(todo) - i))} left", flush=True)
+
+    total = time.time() - run_started
+    print(f"DONE: {len(todo)} questions in {fmt_duration(total)} "
+          f"(~{total / len(todo):.0f} s/question), ~{fmt_cost(total + SCALEDOWN_S)} Modal cost", flush=True)
 
 
 if __name__ == "__main__":

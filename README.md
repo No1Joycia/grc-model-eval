@@ -51,6 +51,17 @@ python3 trial_eval/run_trial.py --start 7 --end 7          # just question #7
 python3 trial_eval/run_trial.py --start 1 --end 30         # a range; prints a time estimate first
 ```
 
+The first line of every run is an estimate. Add `--estimate-only` to see it without sending anything:
+
+```
+ESTIMATE: 30 questions -> ~53 min, ~$1.12 Modal cost (up to ~56 min incl. GPU cold start)
+```
+
+Next, an `asking #N ...` line appears before each request, then a progress line with the time left after each answer.
+The last line gives the actual time and approximate cost:
+`DONE: 30 questions in 51 min (~102 s/question), ~$1.02 Modal cost`.
+The cost is billed to Joy's Modal account and uses a rough list price, so treat it as approximate.
+
 **Score it and get the HTML report.** This needs a one-time setup of about 3 GB: PyTorch plus the bge-m3 embedding model.
 
 ```bash

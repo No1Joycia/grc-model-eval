@@ -31,8 +31,14 @@ Question numbers are line numbers in trial_eval_100.jsonl, sorted by difficulty:
 #1-33 basic, #34-67 intermediate, #68-100 advanced. For a mixed sample pick
 a range from each block (e.g. 1-10, 34-43, 68-77) and run them one after another
 into the same answers file.
-The script prints an estimated run time before starting (based on earlier answers
-in the output file, or ~9 tok/s if there are none) and a time-left figure per question.
+First line of every run (also with --estimate-only): estimated time and Modal cost, e.g.
+    ESTIMATE: 30 questions -> ~53 min, ~$1.12 Modal cost (up to ~56 min incl. GPU cold start)
+Time is based on earlier answers in the output file (or ~9 tok/s if there are none);
+cost uses ~$1.18/h for L4 + CPU + memory (COST_PER_HOUR in run_trial.py; rough list price).
+While running: "asking #N ..." before each request, then one line per answer with a
+time-left figure. Last line: actual time and approximate cost, e.g.
+    DONE: 30 questions in 51 min (~102 s/question), ~$1.02 Modal cost
+Output is flushed per line, so `... | tee trial_run_log.txt` shows progress live.
 
 Output: trial_eval/answers_nanbeige_b0.jsonl
 Settings: system prompt in run_trial.py, max_tokens 1536, temperature 0, thinking off.
