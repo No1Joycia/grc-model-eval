@@ -1,0 +1,97 @@
+NANBEIGE4.2-3B ON MODAL — QUICK COMMAND NOTEBOOK
+================================================
+App name:   nanbeige42-chat-api   (file: nanbeige_api_server.py)
+Volume:     nanbeige42-model-cache (weights already downloaded)
+GPU:        L4, starts on first request, shuts down after 60 s idle
+
+0) EVERY SESSION — ACTIVATE ENVIRONMENT
+---------------------------------------
+    cd ~/Projects/nanbeige-modal
+    source .venv/bin/activate
+    export MODAL_URL=https://<your-url>.modal.run
+    export MODAL_KEY=wk-...
+    export MODAL_SECRET=ws-...
+
+Do NOT commit the key/secret to git. Keep them in a git-ignored .env file if you like.
+
+1) CHECK WHAT IS RUNNING
+------------------------
+    modal app list                         # state: deployed / stopped
+    modal container list                   # GPU containers running now (empty = idle, not billing)
+    modal app logs nanbeige42-chat-api     # live logs: [STARTUP], [SERVER_READY], [REQUEST_OK] (Ctrl+C to exit)
+
+Web dashboard: https://modal.com/apps
+
+2) DEPLOY (FIRST TIME, OR AFTER EDITING THE .py FILE)
+-----------------------------------------------------
+    modal deploy nanbeige_api_server.py > api_deploy_log.txt 2>&1
+    grep -o 'https://[^ ]*modal.run' api_deploy_log.txt     # your endpoint URL
+
+You do NOT need to deploy every time. Once deployed, the app stays deployed;
+Modal starts the GPU automatically when a request arrives.
+Redeploying keeps the same URL.
+
+3) AUTH TOKEN (ONE TIME)
+------------------------
+Modal dashboard -> Settings -> Proxy Auth Tokens -> New token
+  ID     (wk-...)  -> MODAL_KEY
+  Secret (ws-...)  -> MODAL_SECRET
+Every request must send headers:  Modal-Key / Modal-Secret
+Requests without them get 401.
+
+4) WAKE UP / HEALTH CHECK
+-------------------------
+    curl -H "Modal-Key: $MODAL_KEY" -H "Modal-Secret: $MODAL_SECRET" $MODAL_URL/health
+
+First call after idle takes ~1-3 min (container start + model load).
+Ready response: {"status":"ready","model":"Nanbeige/Nanbeige4.2-3B","gpu":"L4"}
+
+5) TEST ONE QUESTION
+--------------------
+    curl -X POST $MODAL_URL/v1/chat/completions \
+      -H "Modal-Key: $MODAL_KEY" -H "Modal-Secret: $MODAL_SECRET" \
+      -H "Content-Type: application/json" \
+      -d '{"model":"Nanbeige/Nanbeige4.2-3B","messages":[{"role":"user","content":"What is GNU Radio?"}],"max_tokens":128,"temperature":0}'
+
+6) STOP THE ENDPOINT COMPLETELY
+-------------------------------
+    modal app stop nanbeige42-chat-api
+
+Bring it back with the deploy command in section 2.
+Not required to save money: the GPU already shuts down after 60 s idle.
+
+7) LIFECYCLE: RUNNING / IDLE / STOPPED
+--------------------------------------
+    State     What's happening                      Billing   How you get there
+    -------   -----------------------------------   -------   ---------------------------------
+    RUNNING   GPU on, model loaded, answering       YES       any request arrives
+    IDLE      deployed, URL works, no GPU on        no        automatic, 60 s after last request
+    STOPPED   app off, URL returns an error         no        modal app stop nanbeige42-chat-api
+
+IDLE -> RUNNING (wake up): just send any request, e.g. the health check:
+    curl -H "Modal-Key: $MODAL_KEY" -H "Modal-Secret: $MODAL_SECRET" $MODAL_URL/health
+  First request takes ~1-3 min (GPU start + model load); then fast.
+  A benchmark script sending questions back-to-back keeps it awake.
+
+RUNNING/IDLE -> STOPPED (complete shutdown):
+    modal app stop nanbeige42-chat-api
+  Rarely needed: IDLE already costs nothing. Use it if a key leaks
+  or the project is finished.
+
+STOPPED -> back up:
+    cd ~/Projects/nanbeige-modal && source .venv/bin/activate
+    modal deploy nanbeige_api_server.py
+  Comes back IDLE; wake it with the health check above.
+  Same URL, same auth tokens, weights still cached (no re-download).
+
+Day-to-day: deploy once -> wake with health check -> let it idle on its own.
+
+REMINDERS
+---------
+- Billing only while a GPU container is running (check: modal container list).
+- One request at a time, ~9 tokens/s. 185 benchmark questions ~= 4-6 hours.
+- Text Q&A only: tool calls and streaming are rejected by this server.
+- Server limits: max_tokens up to 2048 (default 128 if not sent),
+  request timeout 600 s, prompt up to 4096 tokens.
+- GPU fallback order: L4 -> A10G -> L40S (startup log shows which one you got).
+- curl calls longer than ~150 s get a redirect: always use curl -L.

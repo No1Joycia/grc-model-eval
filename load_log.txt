@@ -1,0 +1,23 @@
+✓ Initialized. View run at https://modal.com/apps/caijiuyuejoy/main/ap-zPAFTfujYRYt1bWTnG4SKU
+✓ Created objects.
+├── ✓ Uploaded /Users/joycai/Projects/nanbeige-modal/nanbeige_modal.py
+├── ✓ Created Function download_model.
+└── ✓ Created Function load_model.
+[GPU] NVIDIA L4
+[TORCH] 2.5.1+cu124
+[LOAD] Loading tokenizer...
+[LOAD] Loading model weights onto L4 GPU...
+
+[1ALoading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+[1ALoading checkpoint shards:  50%|█████     | 1/2 [00:08<00:08,  8.88s/it]
+[1ALoading checkpoint shards: 100%|██████████| 2/2 [00:22<00:00, 11.89s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:22<00:00, 11.43s/it]
+LOAD_SUCCESS
+[LOAD_SUCCESS] Model: Nanbeige/Nanbeige4.2-3B
+[LOAD_SUCCESS] Parameter devices: ['cuda:0']
+[LOAD_SUCCESS] Parameter count: 4,169,800,704
+[LOAD_SUCCESS] Tokenizer vocab size: 166,107
+[LOAD_SUCCESS] CUDA memory allocated: 7.83 GiB
+[NOTE] No text generation and no HTTP endpoint were started.
+Stopping app - local entrypoint completed.
+Runner terminated.
+✓ App completed. View run at https://modal.com/apps/caijiuyuejoy/main/ap-zPAFTfujYRYt1bWTnG4SKU

@@ -1,0 +1,18 @@
+# secrets: never commit
+.env
+
+# local environments / caches
+.venv/
+.venv-eval/
+__pycache__/
+.DS_Store
+
+# private project material (kept locally only)
+application form/
+dataset/
+meeting notes/
+pipeline/
+proposal/
+
+# per-run eval outputs (commit a specific run deliberately if wanted)
+trial_eval/answers_*
