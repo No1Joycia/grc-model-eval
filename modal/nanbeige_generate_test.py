@@ -4,7 +4,7 @@ Reuses the checkpoint downloaded by your existing `nanbeige_modal.py` into
 Modal Volume `nanbeige42-model-cache`. Does not modify that script or
 start vLLM, Ollama, or an HTTP server.
 
-From ~/Projects/nanbeige-modal, with .venv activated:
+From ~/Projects/grc-model-eval, with .venv activated:
     modal run modal/nanbeige_generate_test.py
     modal run modal/nanbeige_generate_test.py \
         --prompt "What is GNU Radio? Answer in one sentence." \

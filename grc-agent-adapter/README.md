@@ -10,7 +10,7 @@ runs on macOS with **your own GRC-Agent checkout**, whatever commit it's at. It 
 (GRC-Agent's own system prompt and 22 tools) and writes the same kinds of output files.
 
 ```bash
-cd ~/Projects/nanbeige-modal/grc-agent-adapter
+cd ~/Projects/grc-model-eval/grc-agent-adapter
 bash setup.sh                                              # once: checks, builds the search index, self-test
 ./agent run "Which GNU Radio block makes a cosine tone?" --provider cohere
 ./agent continue runs/<session>/call-01 "Now build it into a flowgraph and save it as tone.grc."
@@ -46,7 +46,7 @@ Folder layout the scripts expect by default:
 ```
 ~/Projects/
 ├── grc-agent/                      Qoherent's GRC-Agent (not modified by this adapter)
-└── nanbeige-modal/
+└── grc-model-eval/
     └── grc-agent-adapter/          this folder
         ├── agent                   the command
         ├── setup.sh                the setup check
@@ -61,7 +61,7 @@ If GRC-Agent lives somewhere else: `export GRC_AGENT_REPO=/path/to/grc-agent` in
 ## 2. Setup
 
 ```bash
-cd ~/Projects/nanbeige-modal/grc-agent-adapter
+cd ~/Projects/grc-model-eval/grc-agent-adapter
 bash setup.sh
 ```
 

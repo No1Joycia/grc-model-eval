@@ -20,7 +20,7 @@ This folder asks Cohere's hosted **North-Mini-Code 1.0** the 100 trial questions
 2. Save it, so it never goes into a tracked file:
 
    ```bash
-   cd ~/Projects/nanbeige-modal/northMiniCode
+   cd ~/Projects/grc-model-eval/northMiniCode
    cp .env.example .env
    open -e .env          # paste the key after COHERE_API_KEY=
    chmod 600 .env
@@ -31,7 +31,7 @@ This folder asks Cohere's hosted **North-Mini-Code 1.0** the 100 trial questions
 ## 2. Run
 
 ```bash
-cd ~/Projects/nanbeige-modal/northMiniCode
+cd ~/Projects/grc-model-eval/northMiniCode
 python3 run_raw.py --estimate-only        # what a run would take; sends nothing
 python3 run_raw.py --limit 3              # smoke test: 3 questions
 python3 run_raw.py                        # all 100 (resumes where it stopped)
@@ -61,7 +61,7 @@ once there are answers in the output file, the estimate uses their average time 
 The scorer needs the one-time `.venv-eval` environment described in `../trial_eval/README.txt`:
 
 ```bash
-cd ~/Projects/nanbeige-modal/northMiniCode
+cd ~/Projects/grc-model-eval/northMiniCode
 ../.venv-eval/bin/python ../trial_eval/score_trial.py --answers answers/answers_north_raw.jsonl
 ```
 

@@ -247,7 +247,7 @@ evaluation is a **batch job**: load the model, answer the questions, score them,
 
 - The GCP education coupon's value, and whether GPU quota is granted on an education billing account (stage 3b).
 - A shared team Drive folder for run folders, or a results table later.
-- Renaming the GitHub repo away from `nanbeige-modal`. Optional. Rename only on GitHub: renaming the local folder breaks the venvs again.
+- ~~Renaming the repo~~ **Done 2026-10-31:** the GitHub repo and the local folder are now `grc-model-eval` (formerly `nanbeige-modal`). GitHub redirects the old URL; the local venv paths were fixed after the folder rename.
 
 ## Sources
 

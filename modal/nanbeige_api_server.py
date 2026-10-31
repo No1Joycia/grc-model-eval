@@ -10,7 +10,7 @@ Important scope:
     It is NOT yet compatible with GRC-Agent's tool-calling workflow.
   - Requires a Modal Proxy Token on every request.
 
-Run from your Mac's nanbeige-modal virtual environment:
+Run from your Mac's grc-model-eval virtual environment:
     modal deploy modal/nanbeige_api_server.py
 
 The deployed https://...modal.run URL is printed at the end of the deploy output.

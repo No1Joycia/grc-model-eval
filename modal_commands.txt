@@ -6,7 +6,7 @@ GPU:        L4, starts on first request, shuts down after 60 s idle
 
 0) EVERY SESSION — ACTIVATE ENVIRONMENT
 ---------------------------------------
-    cd ~/Projects/nanbeige-modal
+    cd ~/Projects/grc-model-eval
     source .venv/bin/activate
     export MODAL_URL=https://<your-url>.modal.run
     export MODAL_KEY=wk-...
@@ -78,7 +78,7 @@ RUNNING/IDLE -> STOPPED (complete shutdown):
   or the project is finished.
 
 STOPPED -> back up:
-    cd ~/Projects/nanbeige-modal && source .venv/bin/activate
+    cd ~/Projects/grc-model-eval && source .venv/bin/activate
     modal deploy modal/nanbeige_api_server.py
   Comes back IDLE; wake it with the health check above.
   Same URL, same auth tokens, weights still cached (no re-download).

@@ -8,7 +8,7 @@
 # See README.md.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Default layout: ~/Projects/nanbeige-modal/grc-agent-adapter next to ~/Projects/grc-agent.
+# Default layout: ~/Projects/grc-model-eval/grc-agent-adapter next to ~/Projects/grc-agent.
 export GRC_AGENT_REPO="${GRC_AGENT_REPO:-$(cd "$HERE/../.." && pwd)/grc-agent}"
 PY="$GRC_AGENT_REPO/.venv/bin/python"
 if [ ! -x "$PY" ]; then

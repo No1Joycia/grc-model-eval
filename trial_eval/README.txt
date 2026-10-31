@@ -24,7 +24,7 @@ Easiest: the Colab notebook colab/eval.ipynb runs steps 1 and 2 for you (see col
 
 By hand, run_trial.py talks to any OpenAI-compatible server. Default: llama-server on this
 machine (bash serve/run_local.sh nanbeige42, see docs/local-llamacpp.md):
-    cd ~/Projects/nanbeige-modal
+    cd ~/Projects/grc-model-eval
     python3 trial_eval/run_trial.py --start 1 --end 30 --estimate-only    # time estimate only
     python3 trial_eval/run_trial.py --start 1 --end 30 --out trial_eval/answers_local.jsonl
     python3 trial_eval/run_trial.py --thinking on --max-tokens 4096 --out trial_eval/answers_local_think.jsonl

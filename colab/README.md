@@ -25,10 +25,10 @@ only adds faster GPUs and fewer limits. Free GPUs aren't guaranteed: if none is 
 
 ## One-time setup (about 5 minutes)
 
-1. **Repo access.** Ask Joy to add you as a collaborator on `No1Joycia/nanbeige-modal`, and accept the email invite.
+1. **Repo access.** Ask Joy to add you as a collaborator on `No1Joycia/grc-model-eval`, and accept the email invite.
 2. **A GitHub token** that can read the repo:
    - GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token.
-     Resource owner `No1Joycia`, repository access *Only select repositories* → `nanbeige-modal`, permission
+     Resource owner `No1Joycia`, repository access *Only select repositories* → `grc-model-eval`, permission
      **Contents: Read-only**. Copy the token.
    - If GitHub doesn't let you pick that repo (fine-grained tokens can be limited for repos owned by another
      person's account), create a **classic** token with the `repo` scope instead. It can read all your private repos,
@@ -53,7 +53,7 @@ and Colab can open it straight from there. Choose **one** of the three ways belo
 **A. Direct link (easiest)**
 
 1. Make sure you're signed in to Google in your browser (the account whose Drive should hold the results).
-2. Open this link: <https://colab.research.google.com/github/No1Joycia/nanbeige-modal/blob/main/colab/eval.ipynb>
+2. Open this link: <https://colab.research.google.com/github/No1Joycia/grc-model-eval/blob/main/colab/eval.ipynb>
 3. The repo is private, so the first time Colab shows *"Authorize with GitHub"* (or *"Include private repos"*).
    Click it, and in the GitHub window that pops up, sign in and approve **Colaboratory**. This only lets Colab
    *show* you notebooks from your repos. It is separate from the `GH_TOKEN` secret, which the notebook uses to
@@ -67,7 +67,7 @@ and Colab can open it straight from there. Choose **one** of the three ways belo
 2. Click the **GitHub** tab at the top of the dialog.
 3. Tick **Include private repos**, and approve **Colaboratory** in the GitHub pop-up (as in A.3).
 4. In the search box, type `No1Joycia` and press Enter. Then choose:
-   - **Repository:** `No1Joycia/nanbeige-modal`;
+   - **Repository:** `No1Joycia/grc-model-eval`;
    - **Branch:** `main`.
 5. A list of notebook files appears. Click **`colab/eval.ipynb`**.
 
@@ -75,7 +75,7 @@ and Colab can open it straight from there. Choose **one** of the three ways belo
 
 1. Get the file:
    - on GitHub, open `colab/eval.ipynb` and click the **Download raw file** button (the down-arrow icon), or
-   - use your local clone: `~/Projects/nanbeige-modal/colab/eval.ipynb`.
+   - use your local clone: `~/Projects/grc-model-eval/colab/eval.ipynb`.
 2. Go to <https://colab.research.google.com>. In the **Open notebook** dialog, choose the **Upload** tab
    (or *File → Upload notebook*).
 3. Click **Browse**, choose `eval.ipynb`, and it opens.

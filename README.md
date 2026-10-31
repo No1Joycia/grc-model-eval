@@ -1,10 +1,16 @@
-# Nanbeige4.2-3B on Modal
+# GRC model evaluation
 
-Hosts the [Nanbeige/Nanbeige4.2-3B](https://huggingface.co/Nanbeige/Nanbeige4.2-3B) model on a
-serverless Modal GPU (L4) and exposes an authenticated, OpenAI-style chat API. It also includes a
-100-question trial evaluation of the base model (B0) on RF / DSP / GNU Radio questions.
+*(Formerly `nanbeige-modal`.)*
 
-Stack: Modal + PyTorch + Transformers 4.45.1 + FastAPI. No vLLM or Ollama.
+Evaluates the models the team fine-tunes for GRC-Agent, starting with
+[Nanbeige/Nanbeige4.2-3B](https://huggingface.co/Nanbeige/Nanbeige4.2-3B), on 100 graded RF / DSP / GNU Radio
+trial questions.
+
+- **Current way:** each teammate runs one Colab notebook ([`colab/`](colab/README.md)) with llama.cpp on Colab's GPU.
+- **Older way, being retired:** the model hosted on a Modal GPU with an OpenAI-style API
+  (Modal + PyTorch + Transformers 4.45.1 + FastAPI; code in [`modal/`](modal/)). Documented below.
+
+Plan: [`COLAB_PLAN.md`](COLAB_PLAN.md).
 
 ---
 
@@ -30,8 +36,8 @@ Never commit them or post them in group chats.
 ### 1. Clone and add the credentials
 
 ```bash
-git clone https://github.com/No1Joycia/nanbeige-modal.git
-cd nanbeige-modal
+git clone https://github.com/No1Joycia/grc-model-eval.git
+cd grc-model-eval
 cp .env.example .env
 # edit .env and paste the MODAL_URL, MODAL_KEY (wk-...) and MODAL_SECRET (ws-...) you were given
 ```
@@ -116,7 +122,7 @@ Modal resources used:
 ## 0. Set up the local environment (Mac)
 
 ```bash
-cd ~/Projects/nanbeige-modal
+cd ~/Projects/grc-model-eval
 python3 -m venv .venv
 source .venv/bin/activate
 pip install modal          # tested with modal 1.6.2
@@ -126,7 +132,7 @@ modal setup                # opens a browser and logs this machine into your Mod
 Do this at the start of every new terminal session:
 
 ```bash
-cd ~/Projects/nanbeige-modal
+cd ~/Projects/grc-model-eval
 source .venv/bin/activate
 ```
 
