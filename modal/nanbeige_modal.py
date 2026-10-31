@@ -1,13 +1,13 @@
 """Minimal Nanbeige4.2-3B loading test on Modal (NO vLLM / Ollama / API).
 
 Run from your Mac (after `modal setup`):
-    modal run nanbeige_modal.py --stage download  # CPU: cache checkpoint in Volume
-    modal run nanbeige_modal.py --stage load      # L4 GPU: load model, no generation
+    modal run modal/nanbeige_modal.py --stage download  # CPU: cache checkpoint in Volume
+    modal run modal/nanbeige_modal.py --stage load      # L4 GPU: load model, no generation
 
 Or run both steps sequentially:
-    modal run nanbeige_modal.py
+    modal run modal/nanbeige_modal.py
 
-NOTE: `modal deploy nanbeige_modal.py` only registers the functions. It does NOT
+NOTE: `modal deploy modal/nanbeige_modal.py` only registers the functions. It does NOT
 load model weights or create a network endpoint. Use `modal run` to test loading.
 """
 

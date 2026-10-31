@@ -4,6 +4,8 @@
 # local environments / caches
 .venv/
 .venv-eval/
+convert/.venv/
+convert/vendor/
 __pycache__/
 .DS_Store
 

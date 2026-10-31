@@ -5,10 +5,10 @@ Modal Volume `nanbeige42-model-cache`. Does not modify that script or
 start vLLM, Ollama, or an HTTP server.
 
 From ~/Projects/nanbeige-modal, with .venv activated:
-    modal run nanbeige_generate_test.py > generate_log.txt 2>&1
-    modal run nanbeige_generate_test.py \
+    modal run modal/nanbeige_generate_test.py
+    modal run modal/nanbeige_generate_test.py \
         --prompt "What is GNU Radio? Answer in one sentence." \
-        --max-new-tokens 96 > generate_log.txt 2>&1
+        --max-new-tokens 96
 
 Each `modal run` creates a temporary Modal App and releases its GPU when done.
 """

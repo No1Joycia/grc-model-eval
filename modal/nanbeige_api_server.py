@@ -11,9 +11,9 @@ Important scope:
   - Requires a Modal Proxy Token on every request.
 
 Run from your Mac's nanbeige-modal virtual environment:
-    modal deploy nanbeige_api_server.py > api_deploy_log.txt 2>&1
+    modal deploy modal/nanbeige_api_server.py
 
-Read the deployed https://...modal.run URL from api_deploy_log.txt.
+The deployed https://...modal.run URL is printed at the end of the deploy output.
 Then authenticate using a workspace Proxy Token (wk-... + ws-...). See
 https://modal.com/docs/guide/webhook-proxy-auth .
 """

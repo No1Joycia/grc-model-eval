@@ -18,32 +18,42 @@ HOW THE 100 QUESTIONS WERE CHOSEN
 - Primary reference = PASS answer from the most reliable teacher (gemma4-31b, else muse-glimmer-30b).
   All PASS answers are kept in "references" (5-7 per question).
 
-STEP 1 — GET ANSWERS FROM NANBEIGE (uses the existing .venv, no extra installs)
--------------------------------------------------------------------------------
+STEP 1 — GET ANSWERS (stdlib only, any python3)
+-----------------------------------------------
+Easiest: the Colab notebook colab/eval.ipynb runs steps 1 and 2 for you (see colab/README.md).
+
+By hand, run_trial.py talks to any OpenAI-compatible server. Default: llama-server on this
+machine (bash serve/run_local.sh nanbeige42, see docs/local-llamacpp.md):
     cd ~/Projects/nanbeige-modal
-    source .venv/bin/activate
-    python trial_eval/run_trial.py --limit 3                     # smoke test: 3 questions
-    python trial_eval/run_trial.py --start 1 --end 30 --estimate-only   # time estimate only
-    python trial_eval/run_trial.py --start 1 --end 30            # questions #1..#30
-    python trial_eval/run_trial.py                               # all 100 (resumes where it stopped)
+    python3 trial_eval/run_trial.py --start 1 --end 30 --estimate-only    # time estimate only
+    python3 trial_eval/run_trial.py --start 1 --end 30 --out trial_eval/answers_local.jsonl
+    python3 trial_eval/run_trial.py --thinking on --max-tokens 4096 --out trial_eval/answers_local_think.jsonl
+
+Options:
+    --base-url     server, ending in /v1 (default http://127.0.0.1:8080/v1)
+    --model        model name sent to the server (default nanbeige42, the name run_local.sh gives it)
+    --thinking     off (default) or on; sent as chat_template_kwargs.enable_thinking
+    --max-tokens   longest answer (default 1536; with thinking on use 4096+, reasoning counts too)
+    --start/--end  question range; --limit N; --estimate-only
+    --out          answers file (default trial_eval/answers_nanbeige_b0.jsonl, the old Modal baseline)
+    --api-key-env  name of an environment variable holding a Bearer key (not needed locally)
+The old Modal endpoint, until it is retired (MODAL_KEY / MODAL_SECRET from .env):
+    python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B
 
 Question numbers are line numbers in trial_eval_100.jsonl, sorted by difficulty:
 #1-33 basic, #34-67 intermediate, #68-100 advanced. For a mixed sample pick
 a range from each block (e.g. 1-10, 34-43, 68-77) and run them one after another
 into the same answers file.
-First line of every run (also with --estimate-only): estimated time and Modal cost, e.g.
-    ESTIMATE: 30 questions -> ~53 min, ~$1.12 Modal cost (up to ~56 min incl. GPU cold start)
-Time is based on earlier answers in the output file (or ~9 tok/s if there are none);
-cost uses ~$1.18/h for L4 + CPU + memory (COST_PER_HOUR in run_trial.py; rough list price).
-While running: "asking #N ..." before each request, then one line per answer with a
-time-left figure. Last line: actual time and approximate cost, e.g.
-    DONE: 30 questions in 51 min (~102 s/question), ~$1.02 Modal cost
-Output is flushed per line, so `... | tee trial_run_log.txt` shows progress live.
 
-Output: trial_eval/answers_nanbeige_b0.jsonl
-Settings: system prompt in run_trial.py, max_tokens 1536, temperature 0, thinking off.
-Time: ~1-2 min per question at ~9 tok/s -> roughly 2-3 hours for 100. Keep the Mac awake:
-    caffeinate -i python trial_eval/run_trial.py
+Every answer row records the settings it was made with (model, server, system prompt,
+max_tokens, temperature, thinking) plus reasoning_chars. The script refuses to add answers
+made with different settings to an existing file: use another --out. Rerunning the same
+command resumes: questions already in the file are skipped.
+
+Progress: the first line is an ESTIMATE (from earlier answers in the file, or a rough
+~20 tok/s guess), then "asking #N ..." before each request and one line per answer with
+tokens, seconds, finish_reason and the time left; the last line is DONE with the total time.
+Output is flushed per line, so `... | tee trial_run_log.txt` shows progress live.
 Watch "finish_reason": many "length" = answers cut off -> raise --max-tokens.
 
 STEP 2 — SCORE (separate environment because it needs PyTorch)
@@ -86,5 +96,6 @@ Next upgrade: an LLM judge with a rubric, checked against ~30 hand grades.
 
 COMPARING ANOTHER MODEL LATER
 -----------------------------
-    python trial_eval/run_trial.py --out trial_eval/answers_<run_id>.jsonl
+    python3 trial_eval/run_trial.py --model <name> --base-url <server>/v1 --out trial_eval/answers_<run_id>.jsonl
     .venv-eval/bin/python trial_eval/score_trial.py --answers trial_eval/answers_<run_id>.jsonl
+In Colab, set HF_REPO / REVISION in the notebook's settings form instead.

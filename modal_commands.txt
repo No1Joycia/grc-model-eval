@@ -1,6 +1,6 @@
 NANBEIGE4.2-3B ON MODAL — QUICK COMMAND NOTEBOOK
 ================================================
-App name:   nanbeige42-chat-api   (file: nanbeige_api_server.py)
+App name:   nanbeige42-chat-api   (file: modal/nanbeige_api_server.py)
 Volume:     nanbeige42-model-cache (weights already downloaded)
 GPU:        L4, starts on first request, shuts down after 60 s idle
 
@@ -24,8 +24,7 @@ Web dashboard: https://modal.com/apps
 
 2) DEPLOY (FIRST TIME, OR AFTER EDITING THE .py FILE)
 -----------------------------------------------------
-    modal deploy nanbeige_api_server.py > api_deploy_log.txt 2>&1
-    grep -o 'https://[^ ]*modal.run' api_deploy_log.txt     # your endpoint URL
+    modal deploy modal/nanbeige_api_server.py     # the last lines print your endpoint URL
 
 You do NOT need to deploy every time. Once deployed, the app stays deployed;
 Modal starts the GPU automatically when a request arrives.
@@ -80,7 +79,7 @@ RUNNING/IDLE -> STOPPED (complete shutdown):
 
 STOPPED -> back up:
     cd ~/Projects/nanbeige-modal && source .venv/bin/activate
-    modal deploy nanbeige_api_server.py
+    modal deploy modal/nanbeige_api_server.py
   Comes back IDLE; wake it with the health check above.
   Same URL, same auth tokens, weights still cached (no re-download).
 

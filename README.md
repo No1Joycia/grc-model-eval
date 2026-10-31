@@ -8,7 +8,20 @@ Stack: Modal + PyTorch + Transformers 4.45.1 + FastAPI. No vLLM or Ollama.
 
 ---
 
-## For teammates: use the hosted model
+## For teammates: run the evaluation yourself in Colab (new, recommended)
+
+The team is moving from the shared Modal endpoint to **one Colab notebook that each teammate runs on their own**:
+it downloads the model from Hugging Face, runs it with llama.cpp on Colab's free T4 GPU, asks the trial questions,
+scores them and shows the report. No server, no shared token.
+
+→ **[`colab/README.md`](colab/README.md)**: one-time setup, how to run `colab/eval.ipynb`, what each step does,
+where the results go. The plan behind it: [`COLAB_PLAN.md`](COLAB_PLAN.md).
+
+The Modal endpoint below still works until it is retired (`COLAB_PLAN.md`, step 7).
+
+---
+
+## For teammates: use the hosted model (Modal, being retired)
 
 The model is already running on Joy's Modal account, so you don't need a Modal account, a GPU or `modal` installed.
 You only need Python 3 and three values from Joy: **URL, key, secret**. Joy sends them privately.
@@ -47,20 +60,20 @@ To look up a question's number: `sed -n 7p trial_eval/trial_eval_100.jsonl | pyt
 **Get the model's answer** (Python 3 only, no installs):
 
 ```bash
-python3 trial_eval/run_trial.py --start 7 --end 7          # just question #7
-python3 trial_eval/run_trial.py --start 1 --end 30         # a range; prints a time estimate first
+set -a; source .env; set +a                                 # MODAL_URL, MODAL_KEY, MODAL_SECRET
+python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B --start 7 --end 7
+python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B --start 1 --end 30
 ```
 
-The first line of every run is an estimate. Add `--estimate-only` to see it without sending anything:
+The first line of every run is a time estimate. Add `--estimate-only` to see it without sending anything:
 
 ```
-ESTIMATE: 30 questions -> ~53 min, ~$1.12 Modal cost (up to ~56 min incl. GPU cold start)
+ESTIMATE: 30 questions -> ~53 min
 ```
 
 Next, an `asking #N ...` line appears before each request, then a progress line with the time left after each answer.
-The last line gives the actual time and approximate cost:
-`DONE: 30 questions in 51 min (~102 s/question), ~$1.02 Modal cost`.
-The cost is billed to Joy's Modal account and uses a rough list price, so treat it as approximate.
+The last line gives the actual time: `DONE: 30 questions in 51 min (~102 s/question)`.
+GPU time is billed to Joy's Modal account.
 
 **Score it and get the HTML report.** This needs a one-time setup of about 3 GB: PyTorch plus the bge-m3 embedding model.
 
@@ -86,13 +99,12 @@ Everything below is for running your **own** copy of the server on your own Moda
 
 | File | What it does |
 |---|---|
-| `nanbeige_modal.py` | Step 1–2: download the weights into a Modal Volume (CPU), then test-load them on an L4 GPU |
-| `nanbeige_generate_test.py` | Step 3: one-shot generation smoke test on the GPU (no server) |
-| `nanbeige_api_server.py` | Step 4: deployed HTTPS chat API (`/health`, `/v1/models`, `/v1/chat/completions`) |
+| `modal/nanbeige_modal.py` | Step 1–2: download the weights into a Modal Volume (CPU), then test-load them on an L4 GPU |
+| `modal/nanbeige_generate_test.py` | Step 3: one-shot generation smoke test on the GPU (no server) |
+| `modal/nanbeige_api_server.py` | Step 4: deployed HTTPS chat API (`/health`, `/v1/models`, `/v1/chat/completions`) |
 | `ask.py` | Ask the hosted model one question from the terminal (stdlib only) |
 | `trial_eval/` | Step 5: 100-question trial eval: ask the endpoint, score the answers, HTML report |
 | `modal_commands.txt` | Short command notebook for day-to-day use |
-| `*_log.txt` | Logs from the runs already done, kept for reference |
 
 Modal resources used:
 
@@ -123,7 +135,7 @@ source .venv/bin/activate
 Downloads the checkpoint on a CPU container into the persistent Volume `nanbeige42-model-cache`.
 
 ```bash
-modal run nanbeige_modal.py --stage download > download_log.txt 2>&1
+modal run modal/nanbeige_modal.py --stage download
 ```
 
 Success line: `[DOWNLOAD_OK] Model checkpoint cached: /model-cache/huggingface/...`
@@ -133,20 +145,20 @@ Success line: `[DOWNLOAD_OK] Model checkpoint cached: /model-cache/huggingface/.
 Loads the tokenizer and weights onto an L4 without generating any text. It checks that the weights are on CUDA and reports memory use.
 
 ```bash
-modal run nanbeige_modal.py --stage load > load_log.txt 2>&1
+modal run modal/nanbeige_modal.py --stage load
 ```
 
 Expected output: `[LOAD_SUCCESS] ... Parameter devices: ['cuda:0'] ... CUDA memory allocated: 7.83 GiB`
 
-(`modal run nanbeige_modal.py` with no `--stage` runs both steps.)
+(`modal run modal/nanbeige_modal.py` with no `--stage` runs both steps.)
 
 ## 3. Quick generation test
 
 ```bash
-modal run nanbeige_generate_test.py > generate_log.txt 2>&1
-modal run nanbeige_generate_test.py \
+modal run modal/nanbeige_generate_test.py
+modal run modal/nanbeige_generate_test.py \
     --prompt "What is GNU Radio? Answer in one sentence." \
-    --max-new-tokens 96 > generate_log.txt 2>&1
+    --max-new-tokens 96
 ```
 
 Expected output: `[RESPONSE] GNU Radio is an open-source ...` and `[GENERATE_SUCCESS]`, at about 9 tokens/s on an L4.
@@ -155,8 +167,7 @@ The GPU is released when the run finishes.
 ## 4. Deploy the FastAPI server
 
 ```bash
-modal deploy nanbeige_api_server.py > api_deploy_log.txt 2>&1
-grep -o 'https://[^ ]*modal.run' api_deploy_log.txt      # your endpoint URL
+modal deploy modal/nanbeige_api_server.py      # the last lines print your endpoint URL (https://...modal.run)
 ```
 
 How it hosts the model:
@@ -187,7 +198,7 @@ Every request must carry a Modal **Proxy Auth Token**. Without it, the request g
    MODAL_SECRET=ws-...     # token secret
    ```
 
-3. Load it into your shell for `curl`. `trial_eval/run_trial.py` reads `.env` on its own.
+3. Load it into your shell for `curl` and for `run_trial.py`'s `--base-url "$MODAL_URL/v1"`. (`trial_eval/run_trial.py` reads the key and secret from `.env` on its own.)
 
    ```bash
    set -a; source .env; set +a
@@ -226,11 +237,12 @@ There are 100 graded questions in `trial_eval/trial_eval_100.jsonl`, ordered by 
 and how to read the metrics.
 
 ```bash
+set -a; source .env; set +a                                 # MODAL_URL, MODAL_KEY, MODAL_SECRET
 # time estimate only (no requests sent)
-python trial_eval/run_trial.py --start 1 --end 30 --estimate-only
+python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B --start 1 --end 30 --estimate-only
 
 # ask questions #1-#30 (resumable: rerun to continue after Ctrl+C)
-caffeinate -i python trial_eval/run_trial.py --start 1 --end 30
+caffeinate -i python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B --start 1 --end 30
 ```
 
 The scorer needs a separate environment because it uses PyTorch. Set it up once:
@@ -263,7 +275,7 @@ modal container list                    # running GPU containers (empty = idle, 
 modal app logs nanbeige42-chat-api      # live logs: [STARTUP] [SERVER_READY] [REQUEST_OK]
 
 modal app stop nanbeige42-chat-api      # take the endpoint down completely (URL stops working)
-modal deploy nanbeige_api_server.py     # bring it back (same URL, weights still cached)
+modal deploy modal/nanbeige_api_server.py   # bring it back (same URL, weights still cached)
 ```
 
 | State | GPU | Billing | How you get there |
@@ -282,10 +294,10 @@ modal volume delete nanbeige42-model-cache    # next use needs step 1 again
 
 ## What has been done so far
 
-- [x] Step 1: weights downloaded into Volume `nanbeige42-model-cache` (`download_log.txt`)
-- [x] Step 2: GPU load test on L4: 4.17 B params, 7.83 GiB (`load_log.txt`)
-- [x] Step 3: generation smoke test, about 9 tok/s (`generate_log.txt`)
-- [x] Step 4: API deployed as `nanbeige42-chat-api` (`api_deploy_log.txt`)
+- [x] Step 1: weights downloaded into Volume `nanbeige42-model-cache`
+- [x] Step 2: GPU load test on L4: 4.17 B params, 7.83 GiB
+- [x] Step 3: generation smoke test, about 9 tok/s
+- [x] Step 4: API deployed as `nanbeige42-chat-api`
 - [x] Step 5: trial-eval set built (100 questions). Next: baseline run and scoring.
 - [ ] Tool calling and streaming support for GRC-Agent
 

@@ -1,0 +1,45 @@
+{
+  "_about": "How every host (Mac, Modal, Qoherent's GPU) runs llama-server. Change settings here and nowhere else, so results stay comparable across hosts.",
+  "llama_cpp": {
+    "build": "b12020",
+    "commit": "0ec4027a2",
+    "why": "Has Nanbeige4.2 support (PR #25994), its tool-call fix (PR #26252) and the Metal fix for macOS 14/15 (PR #31360; release 0.8.0 fails on this Mac). Every host must run this same build."
+  },
+  "server_args": [
+    "-c", "65536",
+    "-ctk", "q8_0", "-ctv", "q8_0",
+    "-fa", "on",
+    "--jinja",
+    "--reasoning-format", "deepseek",
+    "--no-context-shift",
+    "--sse-ping-interval", "30",
+    "-np", "1",
+    "-ngl", "all"
+  ],
+  "models": {
+    "nanbeige42": {
+      "source": {
+        "hf_repo": "Nanbeige/Nanbeige4.2-3B",
+        "revision": "b82e54bd609793562a75cbf9337970a93369eab5"
+      },
+      "gguf_repo": null,
+      "gguf": {
+        "bf16": "Nanbeige4.2-3B-BF16.gguf",
+        "q8_0": "Nanbeige4.2-3B-Q8_0.gguf",
+        "q4_k_m": "Nanbeige4.2-3B-Q4_K_M.gguf"
+      },
+      "sha256": {
+        "bf16": "6bc9e931aee6e92ce1e023610b022e06db52565c3b32a61e070904682ef2def4",
+        "q8_0": {"Darwin-arm64": "a1317a0a6b913f56661934d607c8f7f3104f7254e9efa78de5eb6e700ff087e1", "Linux-x86_64": null},
+        "q4_k_m": {"Darwin-arm64": "a27b7702431b0eb6e62da987bc5f94c4e4a61d703e12d7e17e2d1230a15b9575", "Linux-x86_64": null}
+      },
+      "sha256_why": "Files made by convert/to_gguf.sh from source.revision with the pinned build. BF16 comes from plain Python and must match on every machine. Quantizing can round differently on different processors, so q8_0/q4_k_m keep one reference per platform (uname -s, uname -m); null = not recorded yet, and the first conversion there prints the value to add (COLAB_PLAN.md).",
+      "default_quant": "q8_0",
+      "modal_gpu": "L4",
+      "chat_template": "templates/nanbeige42.jinja",
+      "chat_template_why": "the model's own template, changed only to accept GRC-Agent's two leading system messages (see templates/README.md)",
+      "extra_args_why": "server defaults from the model's generation_config.json; a client that sends temperature etc. overrides them",
+      "extra_args": ["--temp", "0.6", "--top-k", "20", "--top-p", "0.95"]
+    }
+  }
+}

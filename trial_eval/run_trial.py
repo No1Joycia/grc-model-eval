@@ -1,18 +1,19 @@
-"""Send the trial questions to the Nanbeige Modal endpoint and save its answers.
+"""Send the trial questions to an OpenAI-compatible model server and save its answers.
 
-Reads MODAL_URL / MODAL_KEY / MODAL_SECRET from ../.env (or the environment).
-Resumable: questions already in the output file are skipped, so you can stop
-with Ctrl+C and run again. Stdlib only.
+The default server is llama-server on this machine (serve/run_local.sh), as in the Colab
+notebook (colab/eval.ipynb). Resumable: questions already in the output file are skipped,
+so you can stop with Ctrl+C and run again. Stdlib only.
 
-The first line printed is a rough time and Modal cost estimate for the run; the
-last line is the actual time and approximate cost.
+The first line printed is a rough time estimate for the run; the last line is the actual time.
+Every answer row records the settings it was made with, and the script refuses to add answers
+made with different settings to the same file.
 
 Usage:
-    python trial_eval/run_trial.py                       # all questions
-    python trial_eval/run_trial.py --start 1 --end 30    # questions #1..#30 only
-    python trial_eval/run_trial.py --limit 3             # quick smoke test
-    python trial_eval/run_trial.py --start 31 --end 60 --estimate-only
-    python trial_eval/run_trial.py --out trial_eval/answers_nanbeige_b0.jsonl
+    python3 trial_eval/run_trial.py --start 1 --end 30 --out answers.jsonl     # local llama-server
+    python3 trial_eval/run_trial.py --thinking on --max-tokens 4096 --out answers_think.jsonl
+    python3 trial_eval/run_trial.py --start 31 --end 60 --estimate-only
+    # the Modal endpoint, until it is retired (MODAL_KEY / MODAL_SECRET from ../.env):
+    python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B
 """
 
 import argparse
@@ -20,22 +21,19 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-MODEL_ID = "Nanbeige/Nanbeige4.2-3B"
 SYSTEM_PROMPT = (
     "You are an expert in radio-frequency engineering, digital signal processing, "
     "software-defined radio, and GNU Radio. Answer the question accurately and completely. "
     "For calculations, show the key steps and state the final result with units."
 )
-
-# Rough Modal list prices in USD/hour (check https://modal.com/pricing):
-# L4 GPU ~$0.80 + 4 CPU cores ~$0.19 + 24 GiB memory ~$0.19 (the server's settings).
-COST_PER_HOUR = 1.18
-COLD_START_S = 150   # container start + model load, billed once if the GPU was idle
-SCALEDOWN_S = 60     # GPU stays on (billed) this long after the last answer
+GUESS_TOK_S = 20     # first-run guess before any answer is timed (llama.cpp Q8_0 on a T4)
+# Settings that must match between answers in one file (others, e.g. timeout, may differ).
+COMPARED = ("model", "endpoint", "system_prompt", "max_tokens", "temperature", "enable_thinking")
 
 
 def load_env(path):
@@ -55,12 +53,8 @@ def estimate_seconds(out, max_tokens):
         past = [x for x in past if x]
         if past:
             return sum(past) / len(past), f"average of {len(past)} earlier answers"
-    # ~9 tok/s on L4; answers typically use ~60% of max_tokens before stopping.
-    return 0.6 * max_tokens / 9 + 5, "rough guess at ~9 tok/s"
-
-
-def fmt_cost(seconds):
-    return f"${seconds / 3600 * COST_PER_HOUR:.2f}"
+    # Answers typically use ~60% of max_tokens before stopping.
+    return 0.6 * max_tokens / GUESS_TOK_S + 5, f"rough guess at ~{GUESS_TOK_S} tok/s"
 
 
 def fmt_duration(seconds):
@@ -70,21 +64,35 @@ def fmt_duration(seconds):
     return f"{h} h {m} min" if h else f"{m} min"
 
 
-def ask(url, key, secret, question, max_tokens, temperature, timeout):
+def check_settings(out, settings):
+    """Refuse to append to a file whose earlier answers used different settings."""
+    if not out.exists():
+        return
+    for n, line in enumerate(open(out), 1):
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        old = {"model": row.get("model"), **row.get("settings", {})}   # older rows kept the model outside settings
+        diff = [k for k in COMPARED if old.get(k) is not None and old[k] != settings[k]]
+        if diff:
+            details = ", ".join(f"{k}: file has {old[k]!r}, this run {settings[k]!r}" for k in diff)
+            raise SystemExit(f"{out} line {n} was made with different settings ({details}).\n"
+                             f"Use another --out file so the two runs are not mixed.")
+
+
+def ask(url, headers, model, question, max_tokens, temperature, thinking, timeout):
     body = json.dumps({
-        "model": MODEL_ID,
+        "model": model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": question},
         ],
         "max_tokens": max_tokens,
         "temperature": temperature,
+        "chat_template_kwargs": {"enable_thinking": thinking},
     }).encode()
-    req = urllib.request.Request(
-        url + "/v1/chat/completions", data=body, method="POST",
-        headers={"Content-Type": "application/json", "Modal-Key": key, "Modal-Secret": secret},
-    )
-    # urllib follows Modal's 303 redirect for long-running requests.
+    req = urllib.request.Request(url + "/chat/completions", data=body, method="POST", headers=headers)
+    # urllib follows redirects (Modal sends a 303 for requests over 150 s).
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read())
 
@@ -93,6 +101,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--questions", default=str(ROOT / "trial_eval_100.jsonl"))
     ap.add_argument("--out", default=str(ROOT / "answers_nanbeige_b0.jsonl"))
+    ap.add_argument("--base-url", default="http://127.0.0.1:8080/v1", help="OpenAI-style base URL ending in /v1")
+    ap.add_argument("--model", default="nanbeige42", help="model name sent to the server")
+    ap.add_argument("--api-key-env", help="environment variable holding a Bearer key (not needed locally)")
+    ap.add_argument("--thinking", choices=["off", "on"], default="off")
     ap.add_argument("--start", type=int, default=1, help="first question number (1-based)")
     ap.add_argument("--end", type=int, default=None, help="last question number (inclusive)")
     ap.add_argument("--limit", type=int, default=None)
@@ -102,6 +114,15 @@ def main():
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--retries", type=int, default=2)
     args = ap.parse_args()
+
+    base = args.base_url.rstrip("/")
+    host = urllib.parse.urlparse(base).hostname or base
+    modal = host.endswith(".modal.run")
+    thinking = args.thinking == "on"
+    if modal and thinking:
+        raise SystemExit("--thinking on is not possible on the Modal endpoint: its server always turns thinking off")
+    settings = {"model": args.model, "endpoint": host, "system_prompt": SYSTEM_PROMPT,
+                "max_tokens": args.max_tokens, "temperature": args.temperature, "enable_thinking": thinking}
 
     all_questions = [json.loads(l) for l in open(args.questions) if l.strip()]
     end = min(args.end or len(all_questions), len(all_questions))
@@ -114,20 +135,27 @@ def main():
     done = {json.loads(l)["id"] for l in open(out) if l.strip()} if out.exists() else set()
     todo = [q for q in questions if q["id"] not in done]
     per_q, basis = estimate_seconds(out, args.max_tokens)
-    work = per_q * len(todo)
-    billed = work + COLD_START_S + SCALEDOWN_S if todo else 0
-    print(f"ESTIMATE: {len(todo)} questions -> ~{fmt_duration(work)}, ~{fmt_cost(billed)} Modal cost "
-          f"(up to ~{fmt_duration(work + COLD_START_S)} incl. GPU cold start)", flush=True)
+    print(f"ESTIMATE: {len(todo)} questions -> ~{fmt_duration(per_q * len(todo))}", flush=True)
     print(f"  questions #{questions[0]['num']}-#{questions[-1]['num']} ({len(questions)}) | "
           f"{len(questions) - len(todo)} already answered | {len(todo)} to go")
-    print(f"  ~{per_q:.0f} s/question ({basis}); ~${COST_PER_HOUR:.2f}/h for L4 + CPU + memory "
-          f"(A10G/L40S fallback costs more)", flush=True)
+    print(f"  ~{per_q:.0f} s/question ({basis})")
+    print(f"  server {base} | model {args.model} | thinking {args.thinking} | "
+          f"temperature {args.temperature} | max_tokens {args.max_tokens}")
+    print(f"  answers -> {out}", flush=True)
     if args.estimate_only or not todo:
         return
+    check_settings(out, settings)
+    out.parent.mkdir(parents=True, exist_ok=True)
 
-    load_env(ROOT.parent / ".env")
-    url = os.environ["MODAL_URL"].rstrip("/")
-    key, secret = os.environ["MODAL_KEY"], os.environ["MODAL_SECRET"]
+    headers = {"Content-Type": "application/json"}
+    if args.api_key_env:
+        key = os.environ.get(args.api_key_env)
+        if not key:
+            raise SystemExit(f"{args.api_key_env} is not set")
+        headers["Authorization"] = f"Bearer {key}"
+    elif modal:
+        load_env(ROOT.parent / ".env")
+        headers.update({"Modal-Key": os.environ["MODAL_KEY"], "Modal-Secret": os.environ["MODAL_SECRET"]})
 
     run_started = time.time()
     with open(out, "a") as f:
@@ -136,27 +164,29 @@ def main():
             for attempt in range(args.retries + 1):
                 started = time.time()
                 try:
-                    r = ask(url, key, secret, q["question"], args.max_tokens,
-                            args.temperature, args.timeout)
+                    r = ask(base, headers, args.model, q["question"], args.max_tokens,
+                            args.temperature, thinking, args.timeout)
                     break
                 except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
                     detail = exc.read().decode()[:300] if isinstance(exc, urllib.error.HTTPError) else exc
                     print(f"  ! {q['id']} attempt {attempt + 1} failed: {detail}", flush=True)
                     if attempt == args.retries:
-                        raise
+                        raise SystemExit(f"giving up on #{q['num']}: is the model server running at {base}? "
+                                         f"Answers so far are saved; rerun the same command to continue.")
                     time.sleep(10)
             seconds = time.time() - started
             choice, usage = r["choices"][0], r.get("usage", {})
+            message = choice["message"]
             f.write(json.dumps({
                 "id": q["id"],
                 "num": q["num"],
-                "model": MODEL_ID,
-                "answer": choice["message"]["content"],
+                "model": args.model,
+                "answer": message.get("content") or "",
+                "reasoning_chars": len(message.get("reasoning_content") or ""),
                 "finish_reason": choice.get("finish_reason"),
                 "usage": usage,
                 "seconds": round(seconds, 1),
-                "settings": {"system_prompt": SYSTEM_PROMPT, "max_tokens": args.max_tokens,
-                             "temperature": args.temperature, "enable_thinking": False},
+                "settings": settings,
             }, ensure_ascii=False) + "\n")
             f.flush()
             toks = usage.get("completion_tokens", 0)
@@ -165,8 +195,7 @@ def main():
                   f"~{fmt_duration((time.time() - run_started) / i * (len(todo) - i))} left", flush=True)
 
     total = time.time() - run_started
-    print(f"DONE: {len(todo)} questions in {fmt_duration(total)} "
-          f"(~{total / len(todo):.0f} s/question), ~{fmt_cost(total + SCALEDOWN_S)} Modal cost", flush=True)
+    print(f"DONE: {len(todo)} questions in {fmt_duration(total)} (~{total / len(todo):.0f} s/question)", flush=True)
 
 
 if __name__ == "__main__":
