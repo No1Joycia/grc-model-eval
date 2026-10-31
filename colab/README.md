@@ -50,22 +50,28 @@ and Colab can open it straight from there. Choose **one** of the three ways belo
 > the rest of the code (`colab/`, `serve/`, `convert/`, `trial_eval/`) from the `main` branch on GitHub. If those
 > folders aren't pushed yet, step 2 or 3 fails.
 
-**A. Direct link (easiest)**
+**A. Direct link (easiest, after a one-time authorization)**
 
-1. Make sure you're signed in to Google in your browser (the account whose Drive should hold the results).
-2. Open this link: <https://colab.research.google.com/github/No1Joycia/grc-model-eval/blob/main/colab/eval.ipynb>
-3. The repo is private, so the first time Colab shows *"Authorize with GitHub"* (or *"Include private repos"*).
-   Click it, and in the GitHub window that pops up, sign in and approve **Colaboratory**. This only lets Colab
-   *show* you notebooks from your repos. It is separate from the `GH_TOKEN` secret, which the notebook uses to
-   download the code.
+The repo is private, so Colab first needs your permission to read your private GitHub repos. **The link alone
+doesn't ask for it.** Without it, you get `Fetch for https://api.github.com/repos/... failed: "Not Found" (404)`.
+
+1. **First time only:** do steps 1–3 of way B below: tick *Include private repos* and authorize **Colaboratory**
+   on GitHub. This only lets Colab *show* you notebooks from your repos. It is separate from the `GH_TOKEN` secret,
+   which the notebook uses to download the code.
+2. Make sure you're signed in to Google in your browser (the account whose Drive should hold the results).
+3. Open this link: <https://colab.research.google.com/github/No1Joycia/grc-model-eval/blob/main/colab/eval.ipynb>
 4. The notebook opens with the title "GRC model evaluation in Colab". Go to *Check the GPU* below.
 
 **B. From Colab's Open notebook dialog** (same result, found by browsing)
 
-1. Go to <https://colab.research.google.com>. An **Open notebook** dialog appears. If it doesn't, use the menu
-   *File → Open notebook*.
-2. Click the **GitHub** tab at the top of the dialog.
-3. Tick **Include private repos**, and approve **Colaboratory** in the GitHub pop-up (as in A.3).
+1. Go to <https://colab.research.google.com>. Usually an **Open notebook** dialog appears. Colab may instead open
+   a new empty notebook called *Untitled0.ipynb*. In that case use the menu **File → Open notebook** (⌘/Ctrl + O).
+   You can delete *Untitled0.ipynb* later from `MyDrive/Colab Notebooks/`.
+2. In the dialog, click **GitHub** in the list of sources on the left (Examples, Recent, Google Drive, GitHub, Upload).
+3. Tick **Include private repos**. A GitHub window pops up: sign in if asked and click **Authorize** for
+   *Colaboratory*. If no window appears, allow pop-ups for colab.research.google.com and tick the box again.
+   If your repo still isn't listed afterwards, the authorization was given without private-repo access: on GitHub,
+   *Settings → Applications → Authorized OAuth Apps → Colaboratory → Revoke*, then repeat this step.
 4. In the search box, type `No1Joycia` and press Enter. Then choose:
    - **Repository:** `No1Joycia/grc-model-eval`;
    - **Branch:** `main`.
