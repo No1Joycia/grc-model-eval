@@ -1,6 +1,6 @@
 # GRC model evaluation
 
-*(Formerly `nanbeige-modal`.)*
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joycia/grc-model-eval/blob/main/colab/eval.ipynb)
 
 Team JJJP is fine-tuning small models so GRC-Agent can run **offline on a laptop**. This repo **evaluates** those
 models: it asks a model graded RF / DSP / GNU Radio questions and scores its answers. The first model is
@@ -20,7 +20,7 @@ user would run it.
 
 | You want to... | Go to |
 |---|---|
-| **Evaluate a model** (most teammates): one notebook in your own Colab, free T4 GPU, about 5 min of setup the first time | [`colab/README.md`](colab/README.md) |
+| **Evaluate a model** (most teammates): one notebook in your own Colab, free T4 GPU, nothing to set up but a Google account | [`colab/README.md`](colab/README.md) |
 | **Provide question data** (Patricio) | [Data](#data-lives-in-google-drive-not-github) below |
 | **Change how answers are scored**, or add agent tasks (Joel) | [Contributing](#contributing-code) below |
 | Run the model on your Mac with llama.cpp, e.g. for GRC-Agent offline | [`docs/local-llamacpp.md`](docs/local-llamacpp.md) |
@@ -55,7 +55,8 @@ Each teammate runs it in **their own Colab session**: there's no shared server a
 
 ## Data lives in Google Drive, not GitHub
 
-Question data is never committed to GitHub: it's too big, and it isn't ours to publish.
+Question data is never committed to GitHub: it's big, and evaluation questions that get published can end up in other
+models' training data.
 
 - **The data owner** keeps the files in a Google Drive folder (for example `grc-eval-data/`) and shares it with the
   team as *Viewer*. Files are versioned by name (`questions_v1.jsonl`, `questions_v2.jsonl`); a file that has been
@@ -80,6 +81,7 @@ Scripts that *prepare* data (no data inside) can go in the repo, e.g. in a `data
 everyone's next run, so:
 
 1. **Work on a branch:** `git switch -c joel/llm-judge`, commit, `git push -u origin joel/llm-judge`.
+   Pushing needs a collaborator invite from Joy; without one, fork the repo and open the pull request from your fork.
 2. **Test it in Colab:** set `BRANCH` in the notebook's Settings to your branch and *Run all*.
 3. **Open a pull request** into `main`, and merge it when it works.
 

@@ -82,7 +82,7 @@ evaluation is a **batch job**: load the model, answer the questions, score them,
 | Why not Transformers in the notebook | Offline users will run llama.cpp, so the score measures what they get. The free T4 has no bf16 support. A fixed build, file and settings make teammates' results comparable. |
 | Model files | Converted in Colab from the pinned HF checkpoint, hash-checked, cached in the user's Google Drive |
 | Default quantization | Q8_0 (4.1 GB) |
-| Repo access | Teammates added as collaborators; a read-only fine-grained `GH_TOKEN` in Colab Secrets |
+| Repo access | **Public repo (since 2026-10-31):** no token needed to run. `GH_TOKEN` is optional (only for a private copy). Collaborators push branches; others fork |
 | Thinking | **Off** by default (matches the first baseline); `--thinking on` per run; recorded in every answer |
 | Temperature | 0, sent explicitly on every request |
 | Results | One run folder per run in the user's Drive; shared by copying it to a team Drive folder |
@@ -211,6 +211,13 @@ evaluation is a **batch job**: load the model, answer the questions, score them,
   - Step 2 checks the file's fields, and `run_info.json` records the file and its SHA-256.
   - Code changes go through branches and pull requests, testable in Colab with the `BRANCH` setting.
   - Documented in `README.md` and `colab/README.md`.
+- **2026-10-31, repo made public.**
+  - Audit beforehand: no keys, tokens or `.env` files anywhere in the history; no data except the trial set.
+  - Public now: the commit email, the old Modal logs (workspace name, endpoint URL), the trial set, the names in the
+    docs, and the deleted `add-grc-agent-headless` branch, whose commits GitHub still serves through the repo's
+    Activity page.
+  - Changes: the notebook clones without a token (`GH_TOKEN` optional); the READMEs drop the token and private-repo
+    steps and warn that the repo is public; Joy's commits use the GitHub no-reply email.
 - **Open question for the B0 run:** with llama.cpp, question #1 needed more than 1,536 tokens and was cut off (`length`). The Transformers server answered it in 1,416. Decide before step 6 whether `MAX_TOKENS` stays at 1536 or goes up (for example to 2048) for every run.
 
 ### Cost of stage 1

@@ -29,66 +29,31 @@ The plan behind it is [`COLAB_PLAN.md`](COLAB_PLAN.md).
 The free tier is enough for this stage, so the cost is **$0**. Colab Pro (about US$10 a month for 100 compute units)
 only adds faster GPUs and fewer limits. Free GPUs aren't guaranteed: if none is available, try again later.
 
-## One-time setup (about 5 minutes)
-
-1. **Repo access.** Ask Joy to add you as a collaborator on `No1Joycia/grc-model-eval`, and accept the email invite.
-2. **A GitHub token** that can read the repo:
-   - GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token.
-     Resource owner `No1Joycia`, repository access *Only select repositories* → `grc-model-eval`, permission
-     **Contents: Read-only**. Copy the token.
-   - If GitHub doesn't let you pick that repo (fine-grained tokens can be limited for repos owned by another
-     person's account), create a **classic** token with the `repo` scope instead. It can read all your private repos,
-     so give it a short expiry date.
-3. **Store it in Colab**, never in the notebook:
-   1. Open any Colab notebook.
-   2. Click the **key icon** (Secrets) in the left sidebar → *Add new secret*.
-   3. Name it `GH_TOKEN`, paste the token as the value, and switch on **Notebook access**.
-
-   Colab secrets belong to your account, so you only do this once.
-4. *Optional, only for evaluating a private fine-tuned model later:* a Hugging Face read token as a secret named `HF_TOKEN`.
-
 ## Open the notebook
 
-"Opening the notebook" means getting `colab/eval.ipynb` into a Colab browser tab. The file lives in this GitHub repo,
-and Colab can open it straight from there. Choose **one** of the three ways below; they all give the same notebook.
+"Opening the notebook" means getting `colab/eval.ipynb` into a Colab browser tab. Choose **one** of the three ways
+below; they all give the same notebook.
 
-> **The repo must be on GitHub first.** Even if you upload the notebook from your computer (way C), its step 2 downloads
-> the rest of the code (`colab/`, `serve/`, `convert/`, `trial_eval/`) from the `main` branch on GitHub. If those
-> folders aren't pushed yet, step 2 or 3 fails.
+**A. Direct link (easiest)**
 
-**A. Direct link (easiest, after a one-time authorization)**
+1. Make sure you're signed in to Google in your browser (the account whose Drive should hold the results).
+2. Open this link: <https://colab.research.google.com/github/No1Joycia/grc-model-eval/blob/main/colab/eval.ipynb>
+   (or click the *Open in Colab* button in the repo's main README).
+3. The notebook opens with the title "GRC model evaluation in Colab". Go to *Check the GPU* below.
 
-The repo is private, so Colab first needs your permission to read your private GitHub repos. **The link alone
-doesn't ask for it.** Without it, you get `Fetch for https://api.github.com/repos/... failed: "Not Found" (404)`.
+**B. Colab's GitHub page** (to browse to it)
 
-1. **First time only:** do way B below once. Ticking *Include private repos* there authorizes **Colaboratory** on
-   GitHub. This only lets Colab *show* you notebooks from your repos. It is separate from the `GH_TOKEN` secret,
-   which the notebook uses to download the code.
-2. Make sure you're signed in to Google in your browser (the account whose Drive should hold the results).
-3. Open this link: <https://colab.research.google.com/github/No1Joycia/grc-model-eval/blob/main/colab/eval.ipynb>
-4. The notebook opens with the title "GRC model evaluation in Colab". Go to *Check the GPU* below.
-
-**B. Colab's GitHub page** (tested 2026-10-31; also does the one-time authorization)
-
-1. Make sure you're signed in to Google in your browser.
-2. Open <https://colab.research.google.com/github/>. The page shows a search box, "Enter a GitHub URL or search by
-   organization or user", with an **Include private repos** checkbox under it.
-3. Tick **Include private repos**. A GitHub window pops up: sign in if asked and click **Authorize** for
-   *Colaboratory*.
-   - If no window appears, allow pop-ups for colab.research.google.com and tick the box again.
-   - If your repo still isn't listed afterwards, the authorization was given without private-repo access: on GitHub,
-     go to *Settings → Applications → Authorized OAuth Apps → Colaboratory → Revoke*, then repeat this step.
-4. In the search box, type `No1Joycia` and press Enter. Then choose:
+1. Open <https://colab.research.google.com/github/>.
+2. In the search box, type `No1Joycia` and press Enter. Then choose:
    - **Repository:** `No1Joycia/grc-model-eval`;
    - **Branch:** `main`.
-5. A list of notebook files appears. Click **`colab/eval.ipynb`**. It opens with the title "GRC model evaluation in
-   Colab".
+3. A list of notebook files appears. Click **`colab/eval.ipynb`**.
 
 The same GitHub search is also in Colab's **File → Open notebook** dialog (⌘/Ctrl + O, *GitHub* among the sources),
-but newer Colab layouts don't always show it there. The page above always does. If colab.research.google.com opens
-an empty *Untitled0.ipynb*, that's harmless: delete it later from `MyDrive/Colab Notebooks/`.
+but newer Colab layouts don't always show it there. If colab.research.google.com opens an empty *Untitled0.ipynb*,
+that's harmless: delete it later from `MyDrive/Colab Notebooks/`.
 
-**C. Upload the file from your computer** (no GitHub authorization in Colab)
+**C. Upload the file from your computer**
 
 1. Get the file:
    - on GitHub, open `colab/eval.ipynb` and click the **Download raw file** button (the down-arrow icon), or
@@ -143,7 +108,7 @@ lines and **What to do**.
 |---|---|---|---|---|
 | Settings | Reads the form and checks the values | instant | instant | the settings summary line |
 | 1. Check the machine | Confirms there's an NVIDIA GPU; prints GPU, OS, memory, disk | seconds | seconds | `GPU: Tesla T4, ...` |
-| 2. Drive and code | Mounts Drive; clones the repo with `GH_TOKEN`; names the run and its folders | ~1 min | ~1 min | `run folder: ...` |
+| 2. Drive and code | Mounts Drive; clones the repo; checks the question file; names the run and its folders | ~1 min | ~1 min | `run folder: ...` |
 | 3. Install llama.cpp | Downloads the pinned prebuilt CUDA build (~740 MB) and checks it sees the GPU | 1–2 min | 1–2 min | `DONE ... it sees CUDA0: Tesla T4` |
 | 4. Model file | Converts from Hugging Face and saves to Drive, or copies the Drive file back; checks its SHA-256 | 10–15 min | 1–3 min | `check: match` (or the hash to send Joy) |
 | 5. Start the model | Starts llama-server on `127.0.0.1` at a free port (8181 unless taken; Colab uses 8080) and runs the smoke test | 1–2 min | 1–2 min | `all checks passed` |
@@ -185,10 +150,10 @@ To share a run, copy its folder into the team's shared Drive folder.
 
 ## Data: question files in Google Drive
 
-**Data is never put on GitHub.** It's too big for git and not ours to publish. Each data owner (for now Patricio)
-keeps it in a **Google Drive folder** and shares it. Each teammate's notebook reads it from there. The only exception
-is the 100-question trial set, `trial_eval/trial_eval_100.jsonl` (2 MB), kept in the repo so the notebook works out of
-the box.
+**Data is never put on GitHub.** It's too big for git, and evaluation questions that get published can end up in
+other models' training data. Each data owner (for now Patricio) keeps it in a **Google Drive folder** and shares it
+with the team. Each teammate's notebook reads it from there. The only exception is the 100-question trial set,
+`trial_eval/trial_eval_100.jsonl` (2 MB), kept in the repo so the notebook works out of the box.
 
 **For the data owner (sharing a folder, one time):**
 1. In Google Drive, create a folder, e.g. `grc-eval-data`, and put the question files in it.
@@ -233,8 +198,8 @@ Just *Run all* again:
 | What you see | What to do |
 |---|---|
 | `STEP 1/7 FAILED: this runtime has no GPU` | *Runtime → Change runtime type → T4 GPU*, then *Run all*. If no GPU is available, try later. |
-| `can't read the GH_TOKEN secret` | Add the secret, and switch on *Notebook access* for it (One-time setup, step 3). |
-| `git clone failed ... Authentication failed` or `not found` | The token can't read the repo: check the collaborator invite, the token's repository access, and its expiry. |
+| Step 2: `git clone failed ... Remote branch ... not found` | The `BRANCH` in the settings doesn't exist on GitHub (check its spelling, and that it was pushed). |
+| Step 2: `git clone failed ... Authentication failed` or `Repository not found` | `REPO_URL` is wrong, or the repo has been made private again: then add a `GH_TOKEN` secret (a GitHub token that can read it) with *Notebook access*. |
 | Step 3: `the prebuilt llama.cpp can't use this GPU` | Colab's driver is too old for CUDA 12.8. The cell compiles llama.cpp itself (20–40 min, first time only). If that fails too, send the output to Joy. |
 | Step 4: `sha256 ... expects ...` | The model file differs from the team reference. Delete the file it names (in your Drive's `models/` folder) and *Run all* to convert again. If it still differs, tell Joy. |
 | Step 4: `FIRST CONVERSION ON THIS KIND OF MACHINE` | Not an error: send the printed line to Joy so it becomes the reference. |
@@ -252,10 +217,12 @@ copy. Changing the Settings form (range, thinking, ...) needs no saving at all: 
 
 To keep your own edited copy: *File → **Save a copy in Drive*** (it goes to `MyDrive/Colab Notebooks/`).
 
-To change the notebook **for everyone**:
+To change the notebook **for everyone** (needs a collaborator invite from Joy; anyone else can fork the repo and do
+the same on their fork):
 1. *Edit → **Clear all outputs*** first. Otherwise your logs and the report get stored in git.
 2. *File → **Save a copy in GitHub*** → repository `No1Joycia/grc-model-eval`, a **branch** (for example
-   `yourname/notebook-change`, not `main`), and a short commit message.
+   `yourname/notebook-change`, not `main`), and a short commit message. Colab asks once for permission to write to
+   GitHub.
 3. On GitHub, open a pull request from that branch into `main`.
 
 Why not straight to `main`? Every teammate's notebook downloads the latest `main` in step 2, so a change on `main`
