@@ -198,6 +198,19 @@ evaluation is a **batch job**: load the model, answer the questions, score them,
   - All code cells parse, and the notebook passes the Jupyter schema check.
   - Steps 5–7 were rehearsed on the Mac with `colab/helpers.py`: server start, smoke test (tool call included), answers, scoring.
   - Waiting for the first Colab run; that needs `colab/`, `serve/` and `convert/` pushed to `main`.
+- **2026-10-31, first Colab run (#1–5) done (Joy).**
+  - Step 5 first failed: Colab's own runtime listens on port 8080. llama-server now uses a free port (8181 unless
+    taken).
+  - Still to record: the Linux-x86_64 Q8_0 hash from step 4 and the T4 speed from step 6.
+- **2026-10-31, data pipeline.** The question data and the eval method aren't final (Patricio: data; Joel:
+  evaluation).
+  - Data stays out of GitHub: the data owner shares a Google Drive folder, and each teammate adds a shortcut to My
+    Drive.
+  - The notebook's new `QUESTIONS` setting reads a question file from there. Blank keeps the repo's trial set and the
+    same run-folder name.
+  - Step 2 checks the file's fields, and `run_info.json` records the file and its SHA-256.
+  - Code changes go through branches and pull requests, testable in Colab with the `BRANCH` setting.
+  - Documented in `README.md` and `colab/README.md`.
 - **Open question for the B0 run:** with llama.cpp, question #1 needed more than 1,536 tokens and was cut off (`length`). The Transformers server answered it in 1,416. Decide before step 6 whether `MAX_TOKENS` stays at 1536 or goes up (for example to 2048) for every run.
 
 ### Cost of stage 1

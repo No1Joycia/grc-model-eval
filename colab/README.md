@@ -5,10 +5,16 @@ Nobody hosts a server and nobody shares a token. The notebook:
 
 1. downloads Nanbeige4.2-3B from Hugging Face and converts it to a llama.cpp model file (first time only);
 2. runs it with **llama.cpp** on Colab's GPU;
-3. asks it the team's graded trial questions (#1–100, you choose the range);
+3. asks it a set of graded questions: the team's 100 trial questions by default, or a question file from Google Drive
+   (see [Data](#data-question-files-in-google-drive)); you choose the range;
 4. scores the answers and shows an HTML report.
 
 The plan behind it is [`COLAB_PLAN.md`](COLAB_PLAN.md).
+
+> **Work in progress.** The question data and the scoring method aren't final: Patricio is preparing the data and
+> Joel the evaluation. Today's version (100 trial questions, similarity scoring) works end to end. Their versions plug
+> into the same notebook: new data through the `QUESTIONS` setting, new scoring through the repo. How you run it
+> stays the same.
 
 ## What Colab gives you
 
@@ -116,7 +122,8 @@ The top-right corner then shows **Connect** (or *T4* with RAM/Disk bars once con
 
 | Setting | Default | What it does |
 |---|---|---|
-| `START`, `END` | 1, 100 | Which questions: #1–33 basic, #34–67 intermediate, #68–100 advanced |
+| `QUESTIONS` | blank | Blank = the 100 trial questions in the repo. Or a `.jsonl` file in your Google Drive, given as a path inside My Drive, e.g. `grc-eval-data/questions_v2.jsonl` (see [Data](#data-question-files-in-google-drive)) |
+| `START`, `END` | 1, 100 | Which questions, by line number in the file. In the trial set: #1–33 basic, #34–67 intermediate, #68–100 advanced |
 | `MODEL` | `nanbeige42` | The model, as named in `serve/models.json` |
 | `QUANT` | `q8_0` | `q8_0` (4.1 GB, the team standard) or `q4_k_m` (2.4 GB, smaller, slightly lower quality) |
 | `THINKING` | `off` | `on` lets the model reason before answering: slower, and needs `MAX_TOKENS` of 4096 or more |
@@ -172,8 +179,48 @@ MyDrive/grc-eval/
 With the full range (#1–100), the score files are called `answers_scores.csv`, `answers_summary.json` and
 `answers_report.html`.
 
-Runs with different settings (thinking, quantization, max tokens, another model) get their own folder automatically.
+Runs with different settings (thinking, quantization, max tokens, another model, another question file) get their own
+folder automatically; a question file adds its name to the end, e.g. `...-b12020-questions_v2`.
 To share a run, copy its folder into the team's shared Drive folder.
+
+## Data: question files in Google Drive
+
+**Data is never put on GitHub.** It's too big for git and not ours to publish. Each data owner (for now Patricio)
+keeps it in a **Google Drive folder** and shares it. Each teammate's notebook reads it from there. The only exception
+is the 100-question trial set, `trial_eval/trial_eval_100.jsonl` (2 MB), kept in the repo so the notebook works out of
+the box.
+
+**For the data owner (sharing a folder, one time):**
+1. In Google Drive, create a folder, e.g. `grc-eval-data`, and put the question files in it.
+2. *Right-click the folder → Share*. Add your teammates' Google accounts as **Viewer**.
+3. **Never change a file that has been used.** Add a new file instead (`questions_v1.jsonl`, `questions_v2.jsonl`,
+   ...). Every run records the file it used and the file's SHA-256 in its `run_info.json`, so results can always be
+   traced to the exact data.
+4. Keep the IDs of the evaluation questions out of every training file, as `trial_eval/trial_eval_ids.txt` does for
+   the trial set. Otherwise scores after fine-tuning mean nothing.
+
+**For everyone else (using a shared folder, one time):**
+1. In Google Drive, open **Shared with me** and find the folder.
+2. *Right-click it → Organize → **Add shortcut** → My Drive*. Colab can only see what's inside *My Drive*, so this
+   step is what makes the folder visible to the notebook.
+3. In the notebook's Settings, set `QUESTIONS` to the file's path inside My Drive, e.g.
+   `grc-eval-data/questions_v2.jsonl`, then *Run all*.
+
+**Question file format.** JSON Lines: one question per line, as in `trial_eval/trial_eval_100.jsonl`.
+
+| Field | Needed for | Example |
+|---|---|---|
+| `id` | answering (must be unique; answers are matched by it) | `"q_2bce8f4f13f014be"` |
+| `question` | answering | `"Design a flowgraph that reads samples from a file, ..."` |
+| `difficulty` | answering and scoring | `"basic"`, `"intermediate"`, `"advanced"` |
+| `task_type` | answering and scoring | `"design"`, `"calculation"`, `"conceptual"`, ... |
+| `is_gnuradio` | scoring | `true` |
+| `reference_answer` | scoring: the main reference answer | `"To design a flowgraph ..."` |
+| `references` | scoring: every accepted answer, as `{"model": ..., "answer": ...}` | `[{"model": "gemma4-31b", "answer": "..."}]` |
+
+Step 2 checks the file. Without the answering fields it stops. Without the scoring fields it warns: answering works,
+but step 7 can't score. Other fields are kept and ignored. If Joel's scoring needs different fields, this table changes
+with it.
 
 ## If the session disconnects
 
@@ -195,12 +242,30 @@ Just *Run all* again:
 | Step 6: `giving up on #N` | The server stopped. Rerun step 5, then step 6 (answers so far are kept). |
 | `... was made with different settings` | That run folder holds answers made with other settings. This shouldn't happen with the notebook's automatic names; if it does, use another `DRIVE_FOLDER`. |
 | Drive is full | The model file needs 4.1 GB. Free space, or the run still works but converts again every session. |
+| Step 2: `question file not found` | Check the `QUESTIONS` path (a path inside My Drive). For a shared folder, add a shortcut to My Drive first ([Data](#data-question-files-in-google-drive)). |
+| Step 2: `lacks fields the eval needs` | The question file doesn't follow the format in [Data](#data-question-files-in-google-drive). Tell the data owner. |
+
+## Changing the notebook (it does not save back to GitHub)
+
+**Edits you make in Colab are not sent to GitHub.** When you open the notebook from GitHub, Colab works on its own
+copy. Changing the Settings form (range, thinking, ...) needs no saving at all: just *Run all*.
+
+To keep your own edited copy: *File → **Save a copy in Drive*** (it goes to `MyDrive/Colab Notebooks/`).
+
+To change the notebook **for everyone**:
+1. *Edit → **Clear all outputs*** first. Otherwise your logs and the report get stored in git.
+2. *File → **Save a copy in GitHub*** → repository `No1Joycia/grc-model-eval`, a **branch** (for example
+   `yourname/notebook-change`, not `main`), and a short commit message.
+3. On GitHub, open a pull request from that branch into `main`.
+
+Why not straight to `main`? Every teammate's notebook downloads the latest `main` in step 2, so a change on `main`
+reaches everyone's next run at once.
+
+**To test a code change before merging it:** push it to a branch, then set `BRANCH` in the notebook's Settings to that
+branch and *Run all*. Step 2 then downloads your branch instead of `main`. Most logic lives in `colab/helpers.py` and
+the repo's scripts (`serve/`, `trial_eval/`), not in the notebook cells, so most changes don't touch the notebook.
 
 ## For Joy (maintainer)
 
-- The notebook clones this repo, so `colab/`, `serve/`, `convert/` and `trial_eval/` must be **committed and pushed**
-  to `main` before teammates use it.
 - The first Colab conversion prints the Linux Q8_0 hash: add it to `serve/models.json` as
   `"sha256" → "q8_0" → "Linux-x86_64"`. Every later conversion is then checked against it.
-- `colab/eval.ipynb` is plain JSON with the logic kept in `colab/helpers.py` and the repo scripts, so most fixes go
-  into the scripts, not the notebook.
