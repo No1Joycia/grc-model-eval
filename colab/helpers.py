@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import time
 import urllib.error
@@ -191,6 +192,19 @@ def kill_stray_servers():
         time.sleep(2)
 
 
+def free_port(preferred=8181):
+    """A local port nothing listens on: `preferred` if free, else one the OS picks.
+    (Colab's own runtime already listens on 8080, so the llama.cpp default can't be used there.)"""
+    for port in (preferred, 0):
+        with socket.socket() as s:
+            try:
+                s.bind(("127.0.0.1", port))
+                return s.getsockname()[1]
+            except OSError:
+                continue
+    raise OSError("no free local port")
+
+
 def start_server(repo, model, quant, gguf, log_path, port=8080):
     """Start llama-server in the background with the shared settings (serve/run_local.sh)."""
     out = open(log_path, "w")
@@ -211,9 +225,13 @@ def wait_ready(proc, log_path, port=8080, timeout=900):
     started, last = time.time(), 0.0
     while time.time() - started < timeout:
         if proc.poll() is not None:
+            lines = tail(log_path)
+            if any("couldn't bind" in line for line in lines):
+                fail(f"llama-server couldn't use port {port}: another program is already listening on it",
+                     "run this step again: it picks a free port each time", "\n".join(f"    {l}" for l in lines))
             fail(f"llama-server stopped (exit code {proc.returncode}) before it was ready",
                  "read the server log lines above; the full log is in the run folder",
-                 "\n".join(f"    {line}" for line in tail(log_path)))
+                 "\n".join(f"    {line}" for line in lines))
         try:
             with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as r:
                 if r.status == 200:

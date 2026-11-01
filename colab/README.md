@@ -139,7 +139,7 @@ lines and **What to do**.
 | 2. Drive and code | Mounts Drive; clones the repo with `GH_TOKEN`; names the run and its folders | ~1 min | ~1 min | `run folder: ...` |
 | 3. Install llama.cpp | Downloads the pinned prebuilt CUDA build (~740 MB) and checks it sees the GPU | 1–2 min | 1–2 min | `DONE ... it sees CUDA0: Tesla T4` |
 | 4. Model file | Converts from Hugging Face and saves to Drive, or copies the Drive file back; checks its SHA-256 | 10–15 min | 1–3 min | `check: match` (or the hash to send Joy) |
-| 5. Start the model | Starts llama-server on `127.0.0.1:8080` and runs the smoke test | 1–2 min | 1–2 min | `all checks passed` |
+| 5. Start the model | Starts llama-server on `127.0.0.1` at a free port (8181 unless taken; Colab uses 8080) and runs the smoke test | 1–2 min | 1–2 min | `all checks passed` |
 | 6. Answer | Asks each question and saves each answer to Drive at once | ~30 s per question | same | `ESTIMATE`, one line per answer, `DONE` |
 | 7. Score and report | Stops the model, scores, writes `run_info.json`, shows and downloads the report | 2–4 min | 2–4 min | the score summary and the report |
 
