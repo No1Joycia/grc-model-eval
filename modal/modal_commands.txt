@@ -12,7 +12,7 @@ GPU:        L4, starts on first request, shuts down after 60 s idle
     export MODAL_KEY=wk-...
     export MODAL_SECRET=ws-...
 
-Do NOT commit the key/secret to git. Keep them in a git-ignored .env file if you like.
+Do NOT commit the key/secret to git. Keep them in modal/.env (git-ignored) if you like.
 
 1) CHECK WHAT IS RUNNING
 ------------------------

@@ -8,7 +8,7 @@ Nobody hosts a server and nobody shares a token. The notebook:
 3. asks it the team's graded trial questions (#1–100, you choose the range);
 4. scores the answers and shows an HTML report.
 
-The plan behind it is [`../COLAB_PLAN.md`](../COLAB_PLAN.md).
+The plan behind it is [`COLAB_PLAN.md`](COLAB_PLAN.md).
 
 ## What Colab gives you
 

@@ -12,7 +12,7 @@ Usage:
     python3 trial_eval/run_trial.py --start 1 --end 30 --out answers.jsonl     # local llama-server
     python3 trial_eval/run_trial.py --thinking on --max-tokens 4096 --out answers_think.jsonl
     python3 trial_eval/run_trial.py --start 31 --end 60 --estimate-only
-    # the Modal endpoint, until it is retired (MODAL_KEY / MODAL_SECRET from ../.env):
+    # the Modal endpoint, until it is retired (MODAL_KEY / MODAL_SECRET from ../modal/.env):
     python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B
 """
 
@@ -154,7 +154,7 @@ def main():
             raise SystemExit(f"{args.api_key_env} is not set")
         headers["Authorization"] = f"Bearer {key}"
     elif modal:
-        load_env(ROOT.parent / ".env")
+        load_env(ROOT.parent / "modal" / ".env")
         headers.update({"Modal-Key": os.environ["MODAL_KEY"], "Modal-Secret": os.environ["MODAL_SECRET"]})
 
     run_started = time.time()

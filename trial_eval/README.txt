@@ -37,7 +37,7 @@ Options:
     --start/--end  question range; --limit N; --estimate-only
     --out          answers file (default trial_eval/answers_nanbeige_b0.jsonl, the old Modal baseline)
     --api-key-env  name of an environment variable holding a Bearer key (not needed locally)
-The old Modal endpoint, until it is retired (MODAL_KEY / MODAL_SECRET from .env):
+The old Modal endpoint, until it is retired (MODAL_KEY / MODAL_SECRET from modal/.env):
     python3 trial_eval/run_trial.py --base-url "$MODAL_URL/v1" --model Nanbeige/Nanbeige4.2-3B
 
 Question numbers are line numbers in trial_eval_100.jsonl, sorted by difficulty:

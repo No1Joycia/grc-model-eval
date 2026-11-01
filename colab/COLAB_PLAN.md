@@ -165,14 +165,14 @@ evaluation is a **batch job**: load the model, answer the questions, score them,
    - Uses `sha256sum` or `shasum`, whichever exists.
 
 5. **Docs.**
-   - **`README.md`:** rewritten around the notebook: what a teammate does, what it costs, where results go. The Modal steps move to a short "Legacy" note.
+   - **`README.md`:** done 2026-10-31: the top-level README is a short guide to the repo pointing to `colab/README.md`; all Modal instructions moved to `modal/README.md`.
    - **`trial_eval/README.txt`:** the new `run_trial.py` options.
    - **`COLAB_PLAN.md`:** this file. Mark steps done as they land.
 
 6. **Retire Modal.** This happens only after the checks below pass, and Joy confirms each step that touches the account.
    1. Tell teammates. Then `modal app stop nanbeige42-chat-api` and delete the proxy tokens given to teammates.
    2. Delete the Volumes `nanbeige42-model-cache` (about 8 GB of weights) and `nanbeige42-hf-cache` (empty). This can't be undone, but the weights can be downloaded from HF again.
-   3. The Modal scripts are already in `modal/` and the Modal logs are deleted (2026-10-31). Remaining: move `ask.py` and `modal_commands.txt` into `modal/` and add a one-line README there. The git history keeps everything.
+   3. Done 2026-10-31: the Modal scripts, `ask.py`, `modal_commands.txt`, `.env` / `.env.example` and the old plan are in `modal/`; the Modal logs are deleted. The git history keeps everything.
 
 ### Work order
 

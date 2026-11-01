@@ -1,6 +1,6 @@
 # GRC model evaluation workspace: plan
 
-> **Superseded by [COLAB_PLAN.md](../COLAB_PLAN.md) (2026-10-31).** The team moved from a shared Modal endpoint to one Colab notebook per teammate. Kept for reference (formerly `EVAL_WORKSPACE_PLAN.md`).
+> **Superseded by [COLAB_PLAN.md](../colab/COLAB_PLAN.md) (2026-10-31).** The team moved from a shared Modal endpoint to one Colab notebook per teammate. Kept for reference (formerly `EVAL_WORKSPACE_PLAN.md`).
 
 > **Status: draft v2 for review (2026-10-31).** Nothing in this plan has been implemented yet.
 > v2 adds the two-repo split, the server image and OS, the API-key change, data storage, the local cookbook,

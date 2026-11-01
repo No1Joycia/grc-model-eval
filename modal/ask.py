@@ -1,12 +1,12 @@
 """Ask the hosted Nanbeige4.2-3B one question and print the answer.
 
-Reads MODAL_URL / MODAL_KEY / MODAL_SECRET from .env next to this file (or the
+Reads MODAL_URL / MODAL_KEY / MODAL_SECRET from modal/.env, next to this file (or the
 environment). Stdlib only: no installs needed beyond Python 3.
 
 Usage:
-    python3 ask.py "What is GNU Radio? Answer in one sentence."
-    python3 ask.py --max-tokens 512 --system "You are a DSP tutor." "Explain aliasing."
-    python3 ask.py --health                     # wake the GPU / check it is up
+    python3 modal/ask.py "What is GNU Radio? Answer in one sentence."
+    python3 modal/ask.py --max-tokens 512 --system "You are a DSP tutor." "Explain aliasing."
+    python3 modal/ask.py --health                     # wake the GPU / check it is up
 """
 
 import argparse
@@ -47,7 +47,7 @@ def main():
         headers = {"Modal-Key": os.environ["MODAL_KEY"], "Modal-Secret": os.environ["MODAL_SECRET"],
                    "Content-Type": "application/json"}
     except KeyError as exc:
-        sys.exit(f"Missing {exc.args[0]}: copy .env.example to .env and fill in the values you were given.")
+        sys.exit(f"Missing {exc.args[0]}: copy modal/.env.example to modal/.env and fill in the values you were given.")
 
     if args.health:
         req = urllib.request.Request(url + "/health", headers=headers)

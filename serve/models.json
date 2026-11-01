@@ -33,7 +33,7 @@
         "q8_0": {"Darwin-arm64": "a1317a0a6b913f56661934d607c8f7f3104f7254e9efa78de5eb6e700ff087e1", "Linux-x86_64": null},
         "q4_k_m": {"Darwin-arm64": "a27b7702431b0eb6e62da987bc5f94c4e4a61d703e12d7e17e2d1230a15b9575", "Linux-x86_64": null}
       },
-      "sha256_why": "Files made by convert/to_gguf.sh from source.revision with the pinned build. BF16 comes from plain Python and must match on every machine. Quantizing can round differently on different processors, so q8_0/q4_k_m keep one reference per platform (uname -s, uname -m); null = not recorded yet, and the first conversion there prints the value to add (COLAB_PLAN.md).",
+      "sha256_why": "Files made by convert/to_gguf.sh from source.revision with the pinned build. BF16 comes from plain Python and must match on every machine. Quantizing can round differently on different processors, so q8_0/q4_k_m keep one reference per platform (uname -s, uname -m); null = not recorded yet, and the first conversion there prints the value to add (colab/COLAB_PLAN.md).",
       "default_quant": "q8_0",
       "modal_gpu": "L4",
       "chat_template": "templates/nanbeige42.jinja",
