@@ -105,7 +105,9 @@ The top-right corner then shows **Connect** (or *T4* with RAM/Disk bars once con
 ## Run it
 
 1. In the **Settings** form at the top, set the question range (`START`, `END`), and change anything else if you want.
-2. *Runtime → **Run all***.
+2. *Runtime → **Run all***. This runs the Settings cell too. Always start this way rather than clicking the steps one
+   by one: Colab **forgets everything when the runtime restarts**, for example right after you change the runtime
+   type. If a step says *"... hasn't run in this session"*, just use *Run all* again.
 3. In step 2, a pop-up asks for **Google Drive** access: choose your account and allow it.
 4. **Keep the tab open** until step 7 shows the report. Closing the tab or leaving it idle for a long time can
    disconnect a free session. Nothing is lost: see *If the session disconnects*.
