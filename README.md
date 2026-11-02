@@ -75,6 +75,10 @@ Step-by-step sharing, the shortcut, and the **question file format** (the fields
 [`colab/README.md` → Data](colab/README.md#data-question-files-in-google-drive).
 Scripts that *prepare* data (no data inside) can go in the repo, e.g. in a `data/` folder.
 
+Local dataset preparation and format checks are documented in [`data/README.md`](data/README.md).
+The current local release lives in `dataset/qoherent_v3/` (git-ignored), with model-neutral
+training conversations and separate question files matching this evaluation interface.
+
 ## Contributing code
 
 **Every teammate's notebook downloads the latest `main` when it runs.** A change merged into `main` therefore reaches

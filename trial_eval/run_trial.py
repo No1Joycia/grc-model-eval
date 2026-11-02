@@ -39,7 +39,7 @@ COMPARED = ("model", "endpoint", "system_prompt", "max_tokens", "temperature", "
 def load_env(path):
     if not path.exists():
         return
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
@@ -49,7 +49,7 @@ def load_env(path):
 def estimate_seconds(out, max_tokens):
     """Per-question seconds from earlier answers in `out`, else a rough guess."""
     if out.exists():
-        past = [json.loads(l).get("seconds") for l in open(out) if l.strip()]
+        past = [json.loads(l).get("seconds") for l in open(out, encoding="utf-8-sig") if l.strip()]
         past = [x for x in past if x]
         if past:
             return sum(past) / len(past), f"average of {len(past)} earlier answers"
@@ -68,7 +68,7 @@ def check_settings(out, settings):
     """Refuse to append to a file whose earlier answers used different settings."""
     if not out.exists():
         return
-    for n, line in enumerate(open(out), 1):
+    for n, line in enumerate(open(out, encoding="utf-8-sig"), 1):
         if not line.strip():
             continue
         row = json.loads(line)
@@ -124,7 +124,7 @@ def main():
     settings = {"model": args.model, "endpoint": host, "system_prompt": SYSTEM_PROMPT,
                 "max_tokens": args.max_tokens, "temperature": args.temperature, "enable_thinking": thinking}
 
-    all_questions = [json.loads(l) for l in open(args.questions) if l.strip()]
+    all_questions = [json.loads(l) for l in open(args.questions, encoding="utf-8-sig") if l.strip()]
     end = min(args.end or len(all_questions), len(all_questions))
     if not 1 <= args.start <= end:
         raise SystemExit(f"--start/--end must satisfy 1 <= start <= end <= {len(all_questions)}")
@@ -132,7 +132,7 @@ def main():
         q["num"] = n
     questions = all_questions[args.start - 1 : end][: args.limit]
     out = Path(args.out)
-    done = {json.loads(l)["id"] for l in open(out) if l.strip()} if out.exists() else set()
+    done = {json.loads(l)["id"] for l in open(out, encoding="utf-8-sig") if l.strip()} if out.exists() else set()
     todo = [q for q in questions if q["id"] not in done]
     per_q, basis = estimate_seconds(out, args.max_tokens)
     print(f"ESTIMATE: {len(todo)} questions -> ~{fmt_duration(per_q * len(todo))}", flush=True)
@@ -158,7 +158,7 @@ def main():
         headers.update({"Modal-Key": os.environ["MODAL_KEY"], "Modal-Secret": os.environ["MODAL_SECRET"]})
 
     run_started = time.time()
-    with open(out, "a") as f:
+    with open(out, "a", encoding="utf-8", newline="\n") as f:
         for i, q in enumerate(todo, 1):
             print(f"  asking #{q['num']} ({q['difficulty']}, {q['task_type']})...", flush=True)
             for attempt in range(args.retries + 1):

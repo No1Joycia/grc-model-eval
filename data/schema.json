@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Portable conversational fine-tuning record",
+  "type": "object",
+  "required": ["id", "messages", "tools"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "messages": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "required": ["role", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "role": {"enum": ["system", "user", "assistant", "tool"]},
+          "content": {"type": "string"},
+          "name": {"type": "string"},
+          "tool_call_id": {"type": "string"},
+          "tool_calls": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "required": ["id", "type", "function"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {"type": "string"}, "type": {"const": "function"},
+                "function": {
+                  "type": "object", "required": ["name", "arguments"],
+                  "additionalProperties": false,
+                  "properties": {"name": {"type": "string", "pattern": "^[a-zA-Z0-9_-]+$"}, "arguments": {"type": "object"}}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["type", "function"],
+        "properties": {
+          "type": {"const": "function"},
+          "function": {
+            "type": "object", "required": ["name", "description", "parameters"],
+            "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "parameters": {"type": "object"}}
+          }
+        }
+      }
+    }
+  }
+}

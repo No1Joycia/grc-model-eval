@@ -166,7 +166,7 @@ code {{ font-size:13px; }} summary {{ cursor:pointer; margin-top:12px; color:var
 <h2>Questions</h2>
 {''.join(cards)}
 </main></body></html>
-""")
+""", encoding="utf-8")
 
 
 def main():
@@ -182,8 +182,8 @@ def main():
     from rouge_score import rouge_scorer
     from sentence_transformers import SentenceTransformer
 
-    questions = {q["id"]: q for q in map(json.loads, open(args.questions)) if q}
-    answers = {a["id"]: a for a in map(json.loads, open(args.answers)) if a}
+    questions = {q["id"]: q for q in map(json.loads, open(args.questions, encoding="utf-8-sig")) if q}
+    answers = {a["id"]: a for a in map(json.loads, open(args.answers, encoding="utf-8-sig")) if a}
     num = {i: n for n, i in enumerate(questions, 1)}
     end = args.end or len(questions)
     ids = [i for i in questions if i in answers and args.start <= num[i] <= end]
@@ -253,7 +253,7 @@ def main():
     if args.start != 1 or end != len(questions):
         prefix = prefix.with_name(f"{prefix.name}_q{args.start}-{end}")
     csv_path = prefix.with_name(prefix.name + "_scores.csv")
-    with open(csv_path, "w", newline="") as f:
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
@@ -274,7 +274,7 @@ def main():
         summary[f"by_{field}"] = {k: summarize(v) for k, v in sorted(groups.items())}
     summary["settings"] = {"embed_model": args.embed_model, "answers": str(args.answers)}
     json_path = prefix.with_name(prefix.name + "_summary.json")
-    json_path.write_text(json.dumps(summary, indent=2))
+    json_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     html_path = prefix.with_name(prefix.name + "_report.html")
     write_html(html_path, rows, summary, questions, answers,

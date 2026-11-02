@@ -44,7 +44,7 @@ RETRY_STATUS = {429, 500, 502, 503, 504}
 def load_env(path):
     if not path.exists():
         return
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
@@ -54,7 +54,7 @@ def load_env(path):
 def estimate_seconds(out):
     """Per-question seconds from earlier answers in `out`, else a rough guess."""
     if out.exists():
-        past = [json.loads(l).get("seconds") for l in open(out) if l.strip()]
+        past = [json.loads(l).get("seconds") for l in open(out, encoding="utf-8-sig") if l.strip()]
         past = [x for x in past if x]
         if past:
             return sum(past) / len(past), f"average of {len(past)} earlier answers"
@@ -153,7 +153,7 @@ def main():
     ap.add_argument("--retries", type=int, default=4)
     args = ap.parse_args()
 
-    all_questions = [json.loads(l) for l in open(args.questions) if l.strip()]
+    all_questions = [json.loads(l) for l in open(args.questions, encoding="utf-8-sig") if l.strip()]
     end = min(args.end or len(all_questions), len(all_questions))
     if not 1 <= args.start <= end:
         raise SystemExit(f"--start/--end must satisfy 1 <= start <= end <= {len(all_questions)}")
@@ -163,7 +163,7 @@ def main():
     if not questions:
         raise SystemExit("No questions selected: check --limit (must be at least 1)")
     out = Path(args.out)
-    done = {json.loads(l)["id"] for l in open(out) if l.strip()} if out.exists() else set()
+    done = {json.loads(l)["id"] for l in open(out, encoding="utf-8-sig") if l.strip()} if out.exists() else set()
     todo = [q for q in questions if q["id"] not in done]
     per_q, basis = estimate_seconds(out)
     work = max(per_q, args.min_interval) * len(todo)
@@ -186,7 +186,7 @@ def main():
     run_started = time.time()
     last_request = 0.0
     totals = {"completion_tokens": 0, "reasoning_tokens": 0, "length": 0}
-    with open(out, "a") as f:
+    with open(out, "a", encoding="utf-8", newline="\n") as f:
         for i, q in enumerate(todo, 1):
             wait = args.min_interval - (time.time() - last_request)
             if wait > 0:
